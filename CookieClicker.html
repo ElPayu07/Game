@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker de Galetes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8e9d1;
+            color: #5a3921;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            color: #d2691e;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 5px;
+        }
+
+        .subtitol {
+            font-size: 1.2rem;
+            color: #8b4513;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .control-btn {
+            background-color: #8b4513;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .control-btn:hover {
+            background-color: #6b3410;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        .panel-esquerra {
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+            background-color: #f5d8a7;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .panell-dreta {
+            flex: 2;
+            min-width: 400px;
+            background-color: #f5d8a7;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comptador-container {
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #e6c18c;
+            border-radius: 15px;
+            padding: 15px;
+        }
+
+        .comptador-titol {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .comptador {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #8b4513;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .galeta-container {
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .galeta {
+            width: 220px;
+            height: 220px;
+            background-color: #d2691e;
+            border-radius: 50%;
+            margin: 0 auto;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 0, 0, 0.2),
+                0 10px 25px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s;
+        }
+
+        .galeta:hover {
+            transform: scale(1.05);
+        }
+
+        .galeta:active {
+            transform: scale(0.95);
+        }
+
+        .galeta-xocolata {
+            position: absolute;
+            background-color: #4a2c15;
+            border-radius: 50%;
+        }
+
+        .galeta-xocolata:nth-child(1) { width: 35px; height: 35px; top: 50px; left: 70px; }
+        .galeta-xocolata:nth-child(2) { width: 25px; height: 25px; top: 100px; left: 40px; }
+        .galeta-xocolata:nth-child(3) { width: 30px; height: 30px; top: 150px; left: 80px; }
+        .galeta-xocolata:nth-child(4) { width: 20px; height: 20px; top: 70px; left: 140px; }
+        .galeta-xocolata:nth-child(5) { width: 40px; height: 40px; top: 130px; left: 150px; }
+        .galeta-xocolata:nth-child(6) { width: 15px; height: 15px; top: 30px; left: 120px; }
+        .galeta-xocolata:nth-child(7) { width: 30px; height: 30px; top: 170px; left: 30px; }
+
+        .instruccions {
+            text-align: center;
+            font-size: 1rem;
+            color: #5a3921;
+            margin-bottom: 20px;
+            background-color: #e6c18c;
+            border-radius: 15px;
+            padding: 12px;
+        }
+
+        .millores-titol {
+            font-size: 1.8rem;
+            color: #8b4513;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .millores-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 5px;
+            margin-bottom: 15px;
+        }
+
+        .millora {
+            display: flex;
+            flex-direction: column;
+            background-color: #e6c18c;
+            border-radius: 12px;
+            padding: 12px;
+            transition: background-color 0.3s;
+            border-left: 5px solid #d2691e;
+        }
+
+        .millora:hover {
+            background-color: #dbb47a;
+        }
+
+        .millora-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .millora-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+        }
+
+        .millora-info p {
+            font-size: 0.85rem;
+            color: #5a3921;
+        }
+
+        .millora-nivell {
+            font-size: 0.9rem;
+            color: #8b4513;
+            font-weight: bold;
+            background-color: #f5d8a7;
+            padding: 4px 8px;
+            border-radius: 10px;
+        }
+
+        .millora-cost {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #8b4513;
+            margin-bottom: 8px;
+        }
+
+        .millora-boto {
+            background-color: #d2691e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            align-self: flex-start;
+        }
+
+        .millora-boto:hover {
+            background-color: #b35917;
+        }
+
+        .millora-boto:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+
+        .estadistiques {
+            display: flex;
+            justify-content: space-around;
+            background-color: #e6c18c;
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .estadistica {
+            text-align: center;
+        }
+
+        .estadistica-titol {
+            font-size: 1rem;
+            color: #5a3921;
+            margin-bottom: 5px;
+        }
+
+        .estadistica-valor {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #8b4513;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #8b4513;
+            font-size: 0.9rem;
+            padding-top: 15px;
+            width: 100%;
+        }
+
+        .estat-guardat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 100;
+        }
+
+        .filtre-millores {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .filtre-btn {
+            background-color: #e6c18c;
+            color: #5a3921;
+            border: 2px solid #d2691e;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filtre-btn:hover {
+            background-color: #dbb47a;
+        }
+
+        .filtre-btn.active {
+            background-color: #d2691e;
+            color: white;
+        }
+
+        @media (max-width: 1100px) {
+            .millores-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .panell-dreta, .panel-esquerra {
+                max-width: 100%;
+            }
+            
+            .galeta {
+                width: 180px;
+                height: 180px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .estadistiques {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Clicker de Galetes</h1>
+        <p class="subtitol">Clica la galeta per guanyar més galetes!</p>
+        <div class="controls">
+            <button class="control-btn" onclick="guardarProgres()">Guardar Progrés</button>
+            <button class="control-btn" onclick="carregarProgres()">Carregar Progrés</button>
+            <button class="control-btn" onclick="resetJoc()">Reiniciar Joc</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="panel-esquerra">
+            <div class="comptador-container">
+                <div class="comptador-titol">Galetes</div>
+                <div class="comptador" id="comptador">0</div>
+            </div>
+
+            <div class="galeta-container">
+                <div class="galeta" id="galeta">
+                    <!-- Xocolata a la galeta -->
+                    <div class="galeta-xocolata"></div>
+                    <div class="galeta-xocolata"></div>
+                    <div class="galeta-xocolata"></div>
+                    <div class="galeta-xocolata"></div>
+                    <div class="galeta-xocolata"></div>
+                    <div class="galeta-xocolata"></div>
+                    <div class="galeta-xocolata"></div>
+                </div>
+            </div>
+
+            <div class="instruccions">
+                <p>Clica la galeta per guanyar galetes. Cada clic et dóna galetes segons els teus milloraments.</p>
+                <p>Compra millores per augmentar la producció per clic i obtenir galetes automàticament!</p>
+            </div>
+        </div>
+
+        <div class="panell-dreta">
+            <h2 class="millores-titol">Botiga de Millores</h2>
+            
+            <div class="filtre-millores">
+                <button class="filtre-btn active" onclick="filtreMillores('totes')">Totes</button>
+                <button class="filtre-btn" onclick="filtreMillores('clic')">Clic</button>
+                <button class="filtre-btn" onclick="filtreMillores('auto')">Automàtiques</button>
+                <button class="filtre-btn" onclick="filtreMillores('especial')">Especials</button>
+                <button class="filtre-btn" onclick="ordenarPer('preu')">Per Preu</button>
+                <button class="filtre-btn" onclick="ordenarPer('eficiència')">Per Eficiència</button>
+            </div>
+            
+            <div class="millores-container" id="millores-container">
+                <!-- Les millores es generaran amb JavaScript -->
+            </div>
+
+            <div class="estadistiques">
+                <div class="estadistica">
+                    <div class="estadistica-titol">Producció automàtica</div>
+                    <div class="estadistica-valor" id="produccio-per-segon">0</div>
+                </div>
+                <div class="estadistica">
+                    <div class="estadistica-titol">Galetes per clic</div>
+                    <div class="estadistica-valor" id="galetes-per-clic">1</div>
+                </div>
+                <div class="estadistica">
+                    <div class="estadistica-titol">Clics totals</div>
+                    <div class="estadistica-valor" id="clics-totals">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>El progrés es guarda automàticament cada 30 segons. També pots guardar manualment.</p>
+    </footer>
+
+    <div class="estat-guardat" id="estat-guardat">Progrés guardat!</div>
+
+    <script>
+        // Variables del joc
+        let galetes = 0;
+        let galetesPerClic = 1;
+        let produccioPerSegon = 0;
+        let clicsTotals = 0;
+        let factorCost = 1.15; // Factor d'augment de cost per nivell
+        let filtreActual = 'totes';
+        let ordreActual = 'preu';
+        
+        // Millores disponibles (30 millores en total)
+        let millores = [
+            // Millores de clic (1-10)
+            { id: 1, nom: "Mans Ràpides", descripcio: "Augmenta les galetes per clic", costBase: 10, tipus: "clic", valor: 1, nivell: 0, factor: 1 },
+            { id: 2, nom: "Dits Veloces", descripcio: "Més galetes per cada clic", costBase: 50, tipus: "clic", valor: 2, nivell: 0, factor: 1 },
+            { id: 3, nom: "Guants Màgics", descripcio: "Guants que multipliquen els clics", costBase: 100, tipus: "clic", valor: 5, nivell: 0, factor: 1 },
+            { id: 4, nom: "Galetes amb Xocolata", descripcio: "Galetes més valuoses", costBase: 200, tipus: "clic", valor: 10, nivell: 0, factor: 1 },
+            { id: 5, nom: "Galetes Dobles", descripcio: "Cada clic et dóna el doble", costBase: 500, tipus: "clic", valor: 20, nivell: 0, factor: 1 },
+            { id: 6, nom: "Clic Múltiple", descripcio: "Cada clic genera múltiples galetes", costBase: 1000, tipus: "clic", valor: 50, nivell: 0, factor: 1 },
+            { id: 7, nom: "Super Clic", descripcio: "Clics extremadament poderosos", costBase: 2000, tipus: "clic", valor: 100, nivell: 0, factor: 1 },
+            { id: 8, nom: "Hiper Clic", descripcio: "Clics a un altre nivell", costBase: 5000, tipus: "clic", valor: 200, nivell: 0, factor: 1 },
+            { id: 9, nom: "Mega Clic", descripcio: "Cada clic és una explosió de galetes", costBase: 10000, tipus: "clic", valor: 500, nivell: 0, factor: 1 },
+            { id: 10, nom: "Ultra Clic", descripcio: "El clic definitiu", costBase: 20000, tipus: "clic", valor: 1000, nivell: 0, factor: 1 },
+            
+            // Millores de producció automàtica (11-20)
+            { id: 11, nom: "Forn de Galetes", descripcio: "Genera galetes automàticament", costBase: 15, tipus: "auto", valor: 1, nivell: 0, factor: 1 },
+            { id: 12, nom: "Forn Doble", descripcio: "Doble producció de galetes", costBase: 100, tipus: "auto", valor: 2, nivell: 0, factor: 1 },
+            { id: 13, nom: "Forn Industrial", descripcio: "Producció en massa", costBase: 500, tipus: "auto", valor: 5, nivell: 0, factor: 1 },
+            { id: 14, nom: "Cadena de Forns", descripcio: "Múltiples forns treballant", costBase: 1000, tipus: "auto", valor: 10, nivell: 0, factor: 1 },
+            { id: 15, nom: "Fàbrica de Galetes", descripcio: "Producció automatizada", costBase: 2000, tipus: "auto", valor: 20, nivell: 0, factor: 1 },
+            { id: 16, nom: "Complex Industrial", descripcio: "Producció a gran escala", costBase: 5000, tipus: "auto", valor: 50, nivell: 0, factor: 1 },
+            { id: 17, nom: "Parque de Galetes", descripcio: "Una ciutat de galetes", costBase: 10000, tipus: "auto", valor: 100, nivell: 0, factor: 1 },
+            { id: 18, nom: "Planeta Galeta", descripcio: "Un planeta sencer de galetes", costBase: 20000, tipus: "auto", valor: 200, nivell: 0, factor: 1 },
+            { id: 19, nom: "Sistema Solar de Galetes", descripcio: "Galetes a escala interplanetària", costBase: 50000, tipus: "auto", valor: 500, nivell: 0, factor: 1 },
+            { id: 20, nom: "Galàxia de Galetes", descripcio: "Galetes a nivell galàctic", costBase: 100000, tipus: "auto", valor: 1000, nivell: 0, factor: 1 },
+            
+            // Millores especials (21-30)
+            { id: 21, nom: "Multiplicador x2", descripcio: "Multiplica totes les galetes guanyades", costBase: 200, tipus: "especial", valor: 2, nivell: 0, factor: 1 },
+            { id: 22, nom: "Multiplicador x5", descripcio: "Multiplicador més potent", costBase: 1000, tipus: "especial", valor: 5, nivell: 0, factor: 1 },
+            { id: 23, nom: "Multiplicador x10", descripcio: "Multiplicador extrem", costBase: 5000, tipus: "especial", valor: 10, nivell: 0, factor: 1 },
+            { id: 24, nom: "Cada segon compte doble", descripcio: "La producció per segon és més efectiva", costBase: 750, tipus: "especial", valor: 2, nivell: 0, factor: 1 },
+            { id: 25, nom: "Cada segon compte quíntuple", descripcio: "La producció per segon es multiplica", costBase: 3000, tipus: "especial", valor: 5, nivell: 0, factor: 1 },
+            { id: 26, nom: "Clics automàtics", descripcio: "Genera clics automàticament", costBase: 1500, tipus: "especial", valor: 1, nivell: 0, factor: 1 },
+            { id: 27, nom: "Clics ràpids", descripcio: "Més clics automàtics", costBase: 5000, tipus: "especial", valor: 5, nivell: 0, factor: 1 },
+            { id: 28, nom: "Cascada de galetes", descripcio: "Galetes extra de tant en tant", costBase: 10000, tipus: "especial", valor: 100, nivell: 0, factor: 1 },
+            { id: 29, nom: "Lot de galetes", descripcio: "Ocasionalment rebràs moltes galetes", costBase: 25000, tipus: "especial", valor: 1000, nivell: 0, factor: 1 },
+            { id: 30, nom: "Màquina del temps", descripcio: "Accelera tot el procés", costBase: 100000, tipus: "especial", valor: 10, nivell: 0, factor: 1 }
+        ];
+
+        // Elements del DOM
+        const comptadorElement = document.getElementById('comptador');
+        const galetaElement = document.getElementById('galeta');
+        const produccioPerSegonElement = document.getElementById('produccio-per-segon');
+        const galetesPerClicElement = document.getElementById('galetes-per-clic');
+        const clicsTotalsElement = document.getElementById('clics-totals');
+        const milloresContainer = document.getElementById('millores-container');
+        const estatGuardatElement = document.getElementById('estat-guardat');
+
+        // Funció per calcular el cost actual d'una millora
+        function calcularCost(millora) {
+            return Math.floor(millora.costBase * Math.pow(factorCost, millora.nivell));
+        }
+
+        // Funció per calcular la eficiència d'una millora (valor per galeta)
+        function calcularEficiencia(millora) {
+            const cost = calcularCost(millora);
+            const valorTotal = millora.valor * (millora.nivell + 1);
+            
+            // Per les millores de tipus especial, fem un càlcul diferent
+            if (millora.tipus === 'especial') {
+                // Les millores especials tenen més valor
+                return (valorTotal * 5) / cost;
+            }
+            
+            return valorTotal / cost;
+        }
+
+        // Funció per ordenar les millores
+        function ordenarMillores() {
+            if (ordreActual === 'preu') {
+                // Ordenar per cost actual (de menor a major)
+                return [...millores].sort((a, b) => {
+                    return calcularCost(a) - calcularCost(b);
+                });
+            } else if (ordreActual === 'eficiència') {
+                // Ordenar per eficiència (de major a menor)
+                return [...millores].sort((a, b) => {
+                    return calcularEficiencia(b) - calcularEficiencia(a);
+                });
+            }
+            
+            // Per defecte, tornar l'array sense ordenar
+            return [...millores];
+        }
+
+        // Funció per filtrar les millores
+        function filtrarMillores(milloresOrdenades) {
+            if (filtreActual === 'totes') {
+                return milloresOrdenades;
+            } else {
+                return milloresOrdenades.filter(millora => millora.tipus === filtreActual);
+            }
+        }
+
+        // Funció per inicialitzar les millores a la pantalla
+        function inicialitzarMillores() {
+            milloresContainer.innerHTML = '';
+            
+            // Ordenar i filtrar les millores
+            const milloresOrdenades = ordenarMillores();
+            const milloresFiltrades = filtrarMillores(milloresOrdenades);
+            
+            if (milloresFiltrades.length === 0) {
+                const missatge = document.createElement('div');
+                missatge.className = 'instruccions';
+                missatge.textContent = 'No hi ha millores d\'aquest tipus disponibles.';
+                milloresContainer.appendChild(missatge);
+                return;
+            }
+            
+            milloresFiltrades.forEach(millora => {
+                const costActual = calcularCost(millora);
+                const eficiencia = calcularEficiencia(millora).toFixed(2);
+                
+                const milloraElement = document.createElement('div');
+                milloraElement.className = 'millora';
+                milloraElement.innerHTML = `
+                    <div class="millora-header">
+                        <div class="millora-info">
+                            <h3>${millora.nom} <span style="font-size:0.8rem; color:#8b4513;">(${millora.tipus})</span></h3>
+                            <p>${millora.descripcio}</p>
+                        </div>
+                        <div class="millora-nivell">Nivell: ${millora.nivell}</div>
+                    </div>
+                    <div class="millora-cost">Cost: ${costActual} galetes (Eficiència: ${eficiencia})</div>
+                    <button class="millora-boto" onclick="comprarMillora(${millora.id})" id="boto-millora-${millora.id}">
+                        Millorar (${millora.valor * (millora.nivell + 1)} ${millora.tipus === 'clic' ? 'per clic' : millora.tipus === 'auto' ? 'per segon' : 'multiplicador'})
+                    </button>
+                `;
+                
+                milloresContainer.appendChild(milloraElement);
+            });
+            
+            // Actualitzar els botons de filtre
+            actualitzarFiltres();
+        }
+
+        // Funció per actualitzar els botons de filtre
+        function actualitzarFiltres() {
+            const botonsFiltre = document.querySelectorAll('.filtre-btn');
+            botonsFiltre.forEach(boto => {
+                if (boto.textContent.includes('Preu') && ordreActual === 'preu') {
+                    boto.classList.add('active');
+                } else if (boto.textContent.includes('Eficiència') && ordreActual === 'eficiència') {
+                    boto.classList.add('active');
+                } else if (boto.textContent === 'Totes' && filtreActual === 'totes') {
+                    boto.classList.add('active');
+                } else if (boto.textContent === 'Clic' && filtreActual === 'clic') {
+                    boto.classList.add('active');
+                } else if (boto.textContent === 'Automàtiques' && filtreActual === 'auto') {
+                    boto.classList.add('active');
+                } else if (boto.textContent === 'Especials' && filtreActual === 'especial') {
+                    boto.classList.add('active');
+                } else {
+                    boto.classList.remove('active');
+                }
+            });
+        }
+
+        // Funció per filtrar les millores
+        function filtreMillores(tipus) {
+            filtreActual = tipus;
+            inicialitzarMillores();
+        }
+
+        // Funció per ordenar les millores
+        function ordenarPer(ordre) {
+            ordreActual = ordre;
+            inicialitzarMillores();
+        }
+
+        // Funció per actualitzar la pantalla
+        function actualitzarPantalla() {
+            comptadorElement.textContent = Math.floor(galetes);
+            produccioPerSegonElement.textContent = produccioPerSegon;
+            galetesPerClicElement.textContent = galetesPerClic;
+            clicsTotalsElement.textContent = clicsTotals;
+            
+            // Actualitzar l'estat dels botons de millores
+            millores.forEach(millora => {
+                const costActual = calcularCost(millora);
+                const boto = document.getElementById(`boto-millora-${millora.id}`);
+                
+                if (boto) {
+                    boto.disabled = galetes < costActual;
+                    boto.innerHTML = `Millorar (${millora.valor * (millora.nivell + 1)} ${millora.tipus === 'clic' ? 'per clic' : millora.tipus === 'auto' ? 'per segon' : 'multiplicador'})`;
+                    
+                    // Actualitzar el cost i nivell a la pantalla
+                    const milloraElement = boto.parentElement;
+                    if (milloraElement.querySelector('.millora-cost')) {
+                        const eficiencia = calcularEficiencia(millora).toFixed(2);
+                        milloraElement.querySelector('.millora-cost').textContent = `Cost: ${costActual} galetes (Eficiència: ${eficiencia})`;
+                    }
+                    if (milloraElement.querySelector('.millora-nivell')) {
+                        milloraElement.querySelector('.millora-nivell').textContent = `Nivell: ${millora.nivell}`;
+                    }
+                }
+            });
+        }
+
+        // Funció per clicar la galeta
+        function clicarGaleta() {
+            galetes += galetesPerClic;
+            clicsTotals++;
+            actualitzarPantalla();
+            
+            // Efecte visual al clicar
+            galetaElement.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                galetaElement.style.transform = 'scale(1)';
+            }, 100);
+            
+            // Crear un número flotant que mostri les galetes guanyades
+            crearNumeroFlotant(galetesPerClic);
+        }
+
+        // Funció per crear números flotants quan es clica la galeta
+        function crearNumeroFlotant(valor) {
+            const flotant = document.createElement('div');
+            flotant.textContent = '+' + valor;
+            flotant.style.position = 'absolute';
+            flotant.style.color = '#8b4513';
+            flotant.style.fontWeight = 'bold';
+            flotant.style.fontSize = '1.5rem';
+            flotant.style.pointerEvents = 'none';
+            flotant.style.left = Math.random() * 180 + 50 + 'px';
+            flotant.style.top = Math.random() * 180 + 50 + 'px';
+            flotant.style.opacity = '1';
+            flotant.style.transition = 'all 1s';
+            
+            galetaElement.appendChild(flotant);
+            
+            // Animar el número flotant
+            setTimeout(() => {
+                flotant.style.opacity = '0';
+                flotant.style.transform = 'translateY(-30px)';
+            }, 10);
+            
+            // Eliminar l'element després de l'animació
+            setTimeout(() => {
+                if (flotant.parentNode) {
+                    flotant.parentNode.removeChild(flotant);
+                }
+            }, 1000);
+        }
+
+        // Funció per comprar una millora
+        function comprarMillora(id) {
+            const millora = millores.find(m => m.id === id);
+            
+            if (!millora) return;
+            
+            const costActual = calcularCost(millora);
+            
+            if (galetes < costActual) return;
+            
+            galetes -= costActual;
+            millora.nivell++;
+            
+            // Aplicar l'efecte de la millora
+            if (millora.tipus === "clic") {
+                galetesPerClic += millora.valor;
+            } else if (millora.tipus === "auto") {
+                produccioPerSegon += millora.valor;
+            } else if (millora.tipus === "especial") {
+                // Aplicar efectes especials segons l'ID
+                if (id === 21 || id === 22 || id === 23) {
+                    // Multiplicadors globals
+                    galetesPerClic *= millora.valor;
+                    produccioPerSegon *= millora.valor;
+                } else if (id === 24 || id === 25) {
+                    // Multiplicadors de producció per segon
+                    produccioPerSegon *= millora.valor;
+                } else if (id === 26 || id === 27) {
+                    // Clics automàtics (afegir a la producció per segon)
+                    produccioPerSegon += millora.valor * 10; // Cada "clic automàtic" val 10 galetes per segon
+                } else if (id === 28) {
+                    // Cascada de galetes (afegim una producció extra)
+                    produccioPerSegon += 50;
+                } else if (id === 29) {
+                    // Lot de galetes (augmenta les galetes per clic)
+                    galetesPerClic += 100;
+                } else if (id === 30) {
+                    // Màquina del temps (augmenta tot)
+                    galetesPerClic *= 2;
+                    produccioPerSegon *= 2;
+                }
+            }
+            
+            // Guardar automàticament després de comprar
+            guardarProgres();
+            
+            actualitzarPantalla();
+            inicialitzarMillores();
+        }
+
+        // Funció per producció automàtica
+        function produccioAutomatica() {
+            if (produccioPerSegon > 0) {
+                galetes += produccioPerSegon / 10; // Dividim per 10 perquè s'executa 10 vegades per segon
+                actualitzarPantalla();
+            }
+        }
+
+        // ===== SISTEMA DE GUARDAT =====
+        
+        // Funció per mostrar notificació d'estat guardat
+        function mostrarNotificacioGuardat() {
+            estatGuardatElement.style.opacity = '1';
+            setTimeout(() => {
+                estatGuardatElement.style.opacity = '0';
+            }, 2000);
+        }
+        
+        // Funció per guardar el progrés
+        function guardarProgres() {
+            const dadesJoc = {
+                galetes: galetes,
+                galetesPerClic: galetesPerClic,
+                produccioPerSegon: produccioPerSegon,
+                clicsTotals: clicsTotals,
+                millores: millores.map(m => ({
+                    id: m.id,
+                    nivell: m.nivell
+                })),
+                dataGuardat: new Date().toISOString()
+            };
+            
+            localStorage.setItem('galetesClickerProgres', JSON.stringify(dadesJoc));
+            mostrarNotificacioGuardat();
+            console.log('Progrés guardat:', dadesJoc);
+        }
+        
+        // Funció per carregar el progrés
+        function carregarProgres() {
+            const dadesGuardades = localStorage.getItem('galetesClickerProgres');
+            
+            if (!dadesGuardades) {
+                alert('No hi ha dades guardades. Comença un joc nou!');
+                return;
+            }
+            
+            try {
+                const dadesJoc = JSON.parse(dadesGuardades);
+                
+                // Carregar dades bàsiques
+                galetes = dadesJoc.galetes || 0;
+                galetesPerClic = dadesJoc.galetesPerClic || 1;
+                produccioPerSegon = dadesJoc.produccioPerSegon || 0;
+                clicsTotals = dadesJoc.clicsTotals || 0;
+                
+                // Carregar nivells de millores
+                if (dadesJoc.millores) {
+                    dadesJoc.millores.forEach(milloraGuardada => {
+                        const millora = millores.find(m => m.id === milloraGuardada.id);
+                        if (millora) {
+                            millora.nivell = milloraGuardada.nivell || 0;
+                        }
+                    });
+                }
+                
+                // Recalcular estadístiques a partir de les millores
+                recalcularEstadistiques();
+                
+                actualitzarPantalla();
+                inicialitzarMillores();
+                
+                alert(`Progrés carregat correctament!\nData del desat: ${new Date(dadesJoc.dataGuardat).toLocaleString('ca-ES')}`);
+            } catch (error) {
+                console.error('Error carregant progrés:', error);
+                alert('Error carregant el progrés. Les dades poden estar corruptes.');
+            }
+        }
+        
+        // Funció per recalcular estadístiques a partir de les millores
+        function recalcularEstadistiques() {
+            // Reset inicial
+            galetesPerClic = 1;
+            produccioPerSegon = 0;
+            
+            // Aplicar efectes de totes les millores
+            millores.forEach(millora => {
+                if (millora.nivell > 0) {
+                    if (millora.tipus === "clic") {
+                        galetesPerClic += millora.valor * millora.nivell;
+                    } else if (millora.tipus === "auto") {
+                        produccioPerSegon += millora.valor * millora.nivell;
+                    } else if (millora.tipus === "especial") {
+                        // Aplicar efectes especials segons l'ID
+                        if (millora.id === 21 || millora.id === 22 || millora.id === 23) {
+                            // Multiplicadors globals
+                            galetesPerClic *= Math.pow(millora.valor, millora.nivell);
+                            produccioPerSegon *= Math.pow(millora.valor, millora.nivell);
+                        } else if (millora.id === 24 || millora.id === 25) {
+                            // Multiplicadors de producció per segon
+                            produccioPerSegon *= Math.pow(millora.valor, millora.nivell);
+                        } else if (millora.id === 26 || millora.id === 27) {
+                            // Clics automàtics
+                            produccioPerSegon += (millora.valor * 10) * millora.nivell;
+                        } else if (millora.id === 28) {
+                            // Cascada de galetes
+                            produccioPerSegon += 50 * millora.nivell;
+                        } else if (millora.id === 29) {
+                            // Lot de galetes
+                            galetesPerClic += 100 * millora.nivell;
+                        } else if (millora.id === 30) {
+                            // Màquina del temps
+                            galetesPerClic *= Math.pow(2, millora.nivell);
+                            produccioPerSegon *= Math.pow(2, millora.nivell);
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Funció per reiniciar el joc
+        function resetJoc() {
+            if (confirm('Estàs segur que vols reiniciar el joc? Es perdrà tot el progrés no guardat.')) {
+                galetes = 0;
+                galetesPerClic = 1;
+                produccioPerSegon = 0;
+                clicsTotals = 0;
+                
+                // Reiniciar totes les millores
+                millores.forEach(millora => {
+                    millora.nivell = 0;
+                });
+                
+                actualitzarPantalla();
+                inicialitzarMillores();
+                guardarProgres();
+                
+                alert('Joc reiniciat correctament!');
+            }
+        }
+        
+        // Auto-guardar cada 30 segons
+        setInterval(guardarProgres, 30000);
+        
+        // Intentar carregar automàticament al iniciar
+        window.addEventListener('load', function() {
+            // Esperem un moment per assegurar que tot està carregat
+            setTimeout(() => {
+                const dadesGuardades = localStorage.getItem('galetesClickerProgres');
+                if (dadesGuardades) {
+                    if (confirm('S\'han trobat dades guardades. Vols carregar el progrés anterior?')) {
+                        carregarProgres();
+                    }
+                }
+            }, 500);
+        });
+
+        // ===== INICIALITZACIÓ DEL JOC =====
+        
+        // Assignar l'esdeveniment de clic a la galeta
+        galetaElement.addEventListener('click', clicarGaleta);
+
+        // Configurar la producció automàtica (10 vegades per segon per ser més suau)
+        setInterval(produccioAutomatica, 100);
+
+        // Inicialitzar les millores i la pantalla
+        inicialitzarMillores();
+        actualitzarPantalla();
+    </script>
+</body>
+</html>
