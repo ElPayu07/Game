@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ping Pong contra un bot</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemUI, Segoe UI, sans-serif; }
+
+    body {
+      background: radial-gradient(circle at top, #222, #000);
+      color: #f5f5f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      position: relative;
+      width: 900px;
+      max-width: 100%;
+      aspect-ratio: 16 / 9;
+      margin: 0 auto;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    #gameCanvas {
+      background: #111;
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.7);
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+      background: rgba(0,0,0,0.85);
+      z-index: 10;
+    }
+    .hidden { display: none !important; }
+
+    .menu-card {
+      background: rgba(20,20,20,0.95);
+      border-radius: 0;
+      padding: 24px 40px;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 0 25px rgba(0,0,0,0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .menu-inner {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .menu-header { text-align: center; margin-bottom: 10px; }
+    .menu-title { font-size: 2rem; margin-bottom: 6px; text-transform: uppercase; }
+    .menu-subtitle { font-size: 0.9rem; opacity: 0.85; margin-bottom: 10px; }
+
+    h4 {
+      margin-top: 12px;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.9;
+    }
+
+    .btn {
+      padding: 9px 20px;
+      margin: 4px 6px 4px 0;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: 0.15s;
+      user-select: none;
+    }
+
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #22c55e); color: #fff; }
+    .btn-secondary { background: #222; color: #eee; border: 1px solid #555; }
+    .btn-outline { background: transparent; color: #eee; border: 1px solid #777; }
+
+    .btn:hover:not(.btn-disabled) { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .btn-selected { border: 2px solid #22c55e !important; }
+    .btn-disabled { opacity: 0.4; pointer-events: none; }
+
+    .rules { text-align: left; margin-top: 10px; font-size: 0.85rem; opacity: 0.9; }
+    .kbd { background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #444; font-size: 0.8rem; }
+
+    #playerNameInput {
+      width: 260px;
+      max-width: 100%;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #555;
+      background: #111;
+      color: #f5f5f5;
+      font-size: 0.9rem;
+      text-align: center;
+      outline: none;
+    }
+    #playerNameInput:focus { border-color: #22c55e; }
+
+    #onlineScoreWrapper, #streakWrapper, #coinsWrapper {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      opacity: 0.95;
+    }
+    #onlineScoreValue { font-weight: 800; color: #22c55e; }
+    #coinsValue { font-weight: 900; color: #facc15; }
+
+    #onlineLevelText { font-size: 0.95rem; margin-top: 6px; opacity: 0.95; }
+    #onlineProgressText { font-size: 0.8rem; opacity: 0.85; margin-top: 2px; }
+
+    .progress-bar {
+      margin-top: 6px;
+      width: 260px;
+      max-width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: #111;
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+    .progress-bar-inner {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #3b82f6);
+      transition: width 0.2s ease-out;
+    }
+
+    .level-pulse { animation: levelPulse 0.75s ease-in-out 0s 2; }
+    @keyframes levelPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 18px;
+      transform: translateX(-50%);
+      background: rgba(15,15,15,0.92);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 10px 14px;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { animation: toastPop 1.2s ease forwards; }
+    @keyframes toastPop {
+      0% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.96); }
+      20% { opacity: 1; transform: translateX(-50%) translateY(0px) scale(1.02); }
+      70% { opacity: 1; transform: translateX(-50%) translateY(0px) scale(1.0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.98); }
+    }
+
+    #matchmakingDots { margin-top: 8px; font-size: 1.2rem; letter-spacing: 0.2em; opacity: 0.8; }
+
+    /* Botó PALES (dreta) */
+    #btnOpenShop {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      background: rgba(20,20,20,0.92);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      transition: .15s;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.45);
+    }
+    #btnOpenShop:hover { transform: translateY(-50%) scale(1.03); }
+    #btnOpenShop small { display:block; opacity:.8; font-weight:700; letter-spacing:0; text-transform:none; }
+
+    /* Modal botiga */
+    #shopModal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.65);
+      padding: 18px;
+    }
+    .modal-card {
+      width: min(760px, 95vw);
+      max-height: 85vh;
+      overflow: auto;
+      background: rgba(18,18,18,0.97);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      padding: 16px;
+      text-align: left;
+    }
+    .modal-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .modal-sub {
+      font-size: .85rem;
+      opacity:.85;
+      margin-top:2px;
+    }
+    .modal-right { display:flex; align-items:center; gap:8px; }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .shop-item {
+      background: rgba(5,5,5,0.55);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.25);
+      flex: 0 0 auto;
+      background-size: cover;
+      background-position: center;
+    }
+    .shop-left { display:flex; align-items:center; gap:10px; min-width:0; }
+    .shop-name { font-weight: 900; letter-spacing: 0.02em; }
+    .shop-price { font-size: 0.85rem; opacity: 0.85; margin-top: 2px; }
+    .shop-actions { display:flex; gap:6px; flex: 0 0 auto; }
+    .btn-small { padding: 8px 10px; font-size: 0.78rem; margin: 0; }
+
+    @media (max-width: 700px) {
+      .menu-card { padding: 18px 16px; }
+      .menu-title { font-size: 1.6rem; }
+      #btnOpenShop { right: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <canvas id="gameCanvas" width="900" height="506"></canvas>
+  </div>
+
+  <button id="btnOpenShop" title="Botiga de pales">
+    PALES
+    <small id="shopCoinsTiny">0 🪙</small>
+  </button>
+
+  <div id="shopModal" class="hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Botiga de pales">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Botiga de pales</div>
+          <div class="modal-sub">Totes les pales (excepte Blanc) costen <b>120 monedes</b>.</div>
+        </div>
+        <div class="modal-right">
+          <div style="font-weight:900;color:#facc15;" id="shopCoinsHeader">0 monedes</div>
+          <button id="btnCloseShop" class="btn btn-outline btn-small">Tancar</button>
+        </div>
+      </div>
+      <div id="shopGrid" class="shop-grid"></div>
+      <div class="modal-sub" style="margin-top:10px;opacity:.85;">
+        Progrés guardat a localStorage: no es perd per actualitzacions (mentre no esborres dades del navegador i no canvies de domini).
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <div id="mainMenu" class="overlay">
+    <div class="menu-card">
+      <div class="menu-inner">
+        <div class="menu-header">
+          <div class="menu-title">Ping Pong</div>
+          <div class="menu-subtitle">Tria nom, tipus de partida i mode</div>
+          <button id="btnShare" class="btn btn-outline" style="margin-top:6px;">Comparteix el joc</button>
+        </div>
+
+        <h4>El teu nom</h4>
+        <div>
+          <input id="playerNameInput" type="text" maxlength="16" placeholder="Escriu el teu nom..." />
+        </div>
+        <div class="menu-subtitle" style="font-size:0.8rem;">
+          Només lletres (A–Z, a–z), sense accents ni espais.
+        </div>
+
+        <div id="onlineScoreWrapper">Puntuació: <span id="onlineScoreValue">0</span></div>
+        <div id="coinsWrapper">Monedes: <span id="coinsValue">0</span> <span style="opacity:.8;font-size:.85rem;">(contra bot)</span></div>
+        <div id="streakWrapper">Ratxa actual: <span id="streakNow">0</span> · Millor ratxa: <span id="streakBest">0</span></div>
+
+        <div id="onlineLevelText"></div>
+        <div id="onlineProgressText"></div>
+        <div class="progress-bar"><div id="onlineProgressBarInner" class="progress-bar-inner"></div></div>
+
+        <h4>1. Tipus de partida</h4>
+        <div>
+          <button id="btnType2P" class="btn btn-secondary">2 jugadors</button>
+          <button id="btnTypeOnline" class="btn btn-secondary">Jugar contra un bot</button>
+        </div>
+
+        <h4>2. Mode de joc</h4>
+        <div>
+          <button id="btnModeClassic" class="btn btn-outline btn-disabled">Clàssic</button>
+          <button id="btnModeRapid" class="btn btn-outline btn-disabled">Ràpid</button>
+          <button id="btnModeLong" class="btn btn-outline btn-disabled">Long</button>
+        </div>
+
+        <h4>3. Començar</h4>
+        <div><button id="btnStartGame" class="btn btn-primary btn-disabled">Començar partida</button></div>
+
+        <div class="rules">
+          <p><strong>Jugador esquerra (tu):</strong> <span class="kbd">W</span> / <span class="kbd">S</span></p>
+          <p><strong>Jugador dreta:</strong> <span class="kbd">↑</span> / <span class="kbd">↓</span> (en mode 2 jugadors)</p>
+          <p style="margin-top:8px;"><strong>Monedes (contra bot):</strong><br>+10 per punt fet · −7 per punt rebut · si el càlcul surt negatiu → guany 0</p>
+          <p style="margin-top:8px;"><strong>Punts (mai negatius, només contra bot):</strong><br>Clàssic: +30 / −10 · Ràpid: +15 / −7 · Long: +55 / −18</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="endScreen" class="overlay hidden">
+    <div class="menu-card">
+      <div class="menu-inner" style="text-align:center;max-width:480px;">
+        <div id="winnerText" class="menu-title">Guanyador!</div>
+        <div id="modeInfoText" class="menu-subtitle"></div>
+        <div id="coinsEndText" class="menu-subtitle" style="margin-top:6px;"></div>
+        <div id="streakEndText" class="menu-subtitle" style="margin-top:6px;"></div>
+        <button id="btnReplay" class="btn btn-primary" style="margin-top:10px;">Repetir partida</button>
+        <button id="btnBackToMenu" class="btn btn-secondary">Tornar al menú</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="matchmakingOverlay" class="overlay hidden">
+    <div class="menu-card">
+      <div class="menu-inner" style="text-align:center;max-width:360px;">
+        <div class="menu-title" style="font-size:1.4rem;">Buscant un bot rival...</div>
+        <div id="matchmakingDots">···</div>
+        <div class="menu-subtitle" style="margin-top:10px;">Connectant amb el servidor...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Elements UI =====
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const mainMenu = document.getElementById("mainMenu");
+    const endScreen = document.getElementById("endScreen");
+    const matchmakingOverlay = document.getElementById("matchmakingOverlay");
+
+    const winnerText = document.getElementById("winnerText");
+    const modeInfoText = document.getElementById("modeInfoText");
+    const coinsEndText = document.getElementById("coinsEndText");
+    const streakEndText = document.getElementById("streakEndText");
+    const dotsEl = document.getElementById("matchmakingDots");
+
+    const btnType2P = document.getElementById("btnType2P");
+    const btnTypeOnline = document.getElementById("btnTypeOnline");
+    const btnModeClassic = document.getElementById("btnModeClassic");
+    const btnModeRapid = document.getElementById("btnModeRapid");
+    const btnModeLong = document.getElementById("btnModeLong");
+    const btnStartGame = document.getElementById("btnStartGame");
+    const btnReplay = document.getElementById("btnReplay");
+    const btnBackToMenu = document.getElementById("btnBackToMenu");
+    const btnShare = document.getElementById("btnShare");
+
+    const playerNameInput = document.getElementById("playerNameInput");
+    const onlineScoreValue = document.getElementById("onlineScoreValue");
+    const coinsValue = document.getElementById("coinsValue");
+    const onlineLevelText = document.getElementById("onlineLevelText");
+    const onlineProgressText = document.getElementById("onlineProgressText");
+    const onlineProgressBarInner = document.getElementById("onlineProgressBarInner");
+
+    const streakNowEl = document.getElementById("streakNow");
+    const streakBestEl = document.getElementById("streakBest");
+
+    const toastEl = document.getElementById("toast");
+
+    // Botiga modal
+    const btnOpenShop = document.getElementById("btnOpenShop");
+    const shopModal = document.getElementById("shopModal");
+    const btnCloseShop = document.getElementById("btnCloseShop");
+    const shopGrid = document.getElementById("shopGrid");
+    const shopCoinsHeader = document.getElementById("shopCoinsHeader");
+    const shopCoinsTiny = document.getElementById("shopCoinsTiny");
+
+    // ===== Storage keys (no canviar si vols conservar progrés) =====
+    const NAME_KEY = "pongPlayerNameV2";
+    const SCORE_KEY = "pongPlayerScoreV2";
+    const STREAK_NOW_KEY = "pongStreakNowV2";
+    const STREAK_BEST_KEY = "pongStreakBestV2";
+    const COINS_KEY = "pongCoinsV1";
+    const OWNED_SKINS_KEY = "pongOwnedSkinsV1";
+    const EQUIPPED_SKIN_KEY = "pongEquippedSkinV1";
+
+    // ===== Dades jugador =====
+    let playerName = "Tu";
+    let playerScore = 0;
+    let coins = 0;
+    let streakNow = 0;
+    let streakBest = 0;
+
+    // ===== So (WebAudio) =====
+    let audioCtx = null;
+    let audioEnabled = false;
+
+    function ensureAudio() {
+      if (audioEnabled) return;
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); audioEnabled = true; }
+      catch (e) { audioEnabled = false; }
+    }
+
+    function beep(freq, durationMs, type = "sine", gainVal = 0.06) {
+      if (!audioEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(gainVal, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + durationMs / 1000);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + durationMs / 1000 + 0.02);
+    }
+
+    function sfxHit() { beep(520, 45, "square", 0.035); }
+    function sfxPoint() { beep(320, 90, "sine", 0.06); setTimeout(()=>beep(420, 90, "sine", 0.05), 80); }
+    function sfxWin() { beep(523, 120, "triangle", 0.06); setTimeout(()=>beep(659, 140, "triangle", 0.06), 120); setTimeout(()=>beep(784, 160, "triangle", 0.06), 260); }
+    function sfxLose() { beep(220, 140, "sawtooth", 0.05); setTimeout(()=>beep(180, 160, "sawtooth", 0.05), 130); }
+    function sfxBuy() { beep(880, 70, "triangle", 0.06); setTimeout(()=>beep(988, 70, "triangle", 0.06), 80); }
+    function sfxNoMoney() { beep(180, 100, "square", 0.05); }
+
+    // ===== Toast =====
+    let toastTimer = null;
+    function showToast(text) {
+      toastEl.textContent = text;
+      toastEl.classList.remove("show");
+      void toastEl.offsetWidth;
+      toastEl.classList.add("show");
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove("show"), 1300);
+    }
+
+    function pulseLevelUI() {
+      onlineLevelText.classList.remove("level-pulse");
+      onlineProgressBarInner.classList.remove("level-pulse");
+      void onlineLevelText.offsetWidth;
+      onlineLevelText.classList.add("level-pulse");
+      onlineProgressBarInner.classList.add("level-pulse");
+      setTimeout(() => {
+        onlineLevelText.classList.remove("level-pulse");
+        onlineProgressBarInner.classList.remove("level-pulse");
+      }, 1600);
+    }
+
+    // ===== Nivells =====
+    function getLevelInfo(score) {
+      let level, min, max;
+      if (score <= 89) { level = 1; min = 0;   max = 89; }
+      else if (score <= 199) { level = 2; min = 90;  max = 199; }
+      else if (score <= 499) { level = 3; min = 200; max = 499; }
+      else if (score <= 1000) { level = 4; min = 500; max = 1000; }
+      else { level = 5; min = 1001; max = null; }
+
+      let rangeText = max === null ? "1001+ punts" : `${min}-${max} punts`;
+      let progressText = "";
+      let percent = null;
+
+      if (max === null) {
+        progressText = `Punts actuals: ${score}`;
+      } else {
+        const span = max - min + 1;
+        const progress = Math.max(0, Math.min(span, score - min));
+        percent = Math.round((progress / span) * 100);
+        progressText = `${score}/${max} punts (aprox. ${percent}%)`;
+      }
+      return { level, min, max, rangeText, progressText, percent };
+    }
+
+    // ===== Botiga / skins =====
+    const SHOP_PRICE = 120;
+
+    // IMPORTANT: pala1.png ha d'estar al mateix lloc que index.html
+    // Si la poses a assets/, canvia "pala1.png" per "assets/pala1.png"
+    const SKINS = [
+      { id: "white",  name: "Blanc",  price: 0,          type: "color", color: "#e5e5e5" },
+      { id: "yellow", name: "Groc",   price: SHOP_PRICE, type: "color", color: "#facc15" },
+      { id: "purple", name: "Lila",   price: SHOP_PRICE, type: "color", color: "#a855f7" },
+      { id: "red",    name: "Vermell",price: SHOP_PRICE, type: "color", color: "#ef4444" },
+      { id: "blue",   name: "Blau",   price: SHOP_PRICE, type: "color", color: "#3b82f6" },
+      { id: "green",  name: "Verd",   price: SHOP_PRICE, type: "color", color: "#22c55e" },
+      { id: "orange", name: "Tronja", price: SHOP_PRICE, type: "color", color: "#f97316" },
+
+      // ✅ Skin en imatge (la teva)
+      { id: "pala1",  name: "Pala 1", price: SHOP_PRICE, type: "image", src: "pala1.png" }
+    ];
+
+    let ownedSkins = { white: true };
+    let equippedSkinId = "white";
+
+    // Carreguem imatges de skins
+    const skinImages = {}; // id -> { img, ready }
+    for (const s of SKINS) {
+      if (s.type === "image") {
+        const img = new Image();
+        skinImages[s.id] = { img, ready: false };
+        img.onload = () => { skinImages[s.id].ready = true; };
+        img.onerror = () => { skinImages[s.id].ready = false; };
+        img.src = s.src;
+      }
+    }
+
+    function getSkinById(id) {
+      return SKINS.find(s => s.id === id) || SKINS[0];
+    }
+
+    function saveCoins() { try { localStorage.setItem(COINS_KEY, String(coins)); } catch(e) {} }
+    function saveSkins() {
+      try {
+        localStorage.setItem(OWNED_SKINS_KEY, JSON.stringify(ownedSkins));
+        localStorage.setItem(EQUIPPED_SKIN_KEY, equippedSkinId);
+      } catch(e) {}
+    }
+
+    function updateCoinsUI() {
+      coinsValue.textContent = String(coins);
+      shopCoinsHeader.textContent = `${coins} monedes`;
+      shopCoinsTiny.textContent = `${coins} 🪙`;
+    }
+
+    function renderShop() {
+      shopGrid.innerHTML = "";
+      for (const skin of SKINS) {
+        const owned = !!ownedSkins[skin.id];
+        const equipped = equippedSkinId === skin.id;
+
+        const item = document.createElement("div");
+        item.className = "shop-item";
+
+        const left = document.createElement("div");
+        left.className = "shop-left";
+
+        const sw = document.createElement("div");
+        sw.className = "swatch";
+
+        if (skin.type === "image") {
+          sw.style.backgroundImage = `url("${skin.src}")`;
+          sw.style.backgroundColor = "#111";
+        } else {
+          sw.style.backgroundImage = "none";
+          sw.style.backgroundColor = skin.color;
+        }
+
+        const textWrap = document.createElement("div");
+        textWrap.style.minWidth = "0";
+
+        const nm = document.createElement("div");
+        nm.className = "shop-name";
+        nm.textContent = skin.name;
+
+        const pr = document.createElement("div");
+        pr.className = "shop-price";
+        pr.textContent = skin.price === 0 ? "Gratis" : `${skin.price} monedes`;
+
+        textWrap.appendChild(nm);
+        textWrap.appendChild(pr);
+
+        left.appendChild(sw);
+        left.appendChild(textWrap);
+
+        const actions = document.createElement("div");
+        actions.className = "shop-actions";
+
+        if (!owned) {
+          const buy = document.createElement("button");
+          buy.className = "btn btn-secondary btn-small";
+          buy.textContent = "Comprar";
+          buy.onclick = () => {
+            ensureAudio();
+            if (coins < skin.price) { sfxNoMoney(); showToast("No tens prou monedes"); return; }
+            coins -= skin.price;
+            ownedSkins[skin.id] = true;
+            equippedSkinId = skin.id;
+            saveCoins(); saveSkins();
+            updateCoinsUI();
+            renderShop();
+            sfxBuy();
+            showToast(`Comprat: ${skin.name}`);
+          };
+          actions.appendChild(buy);
+        } else {
+          if (equipped) {
+            const eq = document.createElement("button");
+            eq.className = "btn btn-outline btn-small btn-disabled";
+            eq.textContent = "Equipada";
+            actions.appendChild(eq);
+          } else {
+            const equip = document.createElement("button");
+            equip.className = "btn btn-outline btn-small";
+            equip.textContent = "Equipar";
+            equip.onclick = () => {
+              ensureAudio();
+              equippedSkinId = skin.id;
+              saveSkins();
+              renderShop();
+              showToast(`Equipada: ${skin.name}`);
+            };
+            actions.appendChild(equip);
+          }
+        }
+
+        item.appendChild(left);
+        item.appendChild(actions);
+        shopGrid.appendChild(item);
+      }
+    }
+
+    // ===== Carrega dades =====
+    (function loadPlayerData() {
+      try {
+        const storedName = localStorage.getItem(NAME_KEY);
+        if (storedName && /^[A-Za-z]+$/.test(storedName)) playerName = storedName;
+
+        const storedScore = localStorage.getItem(SCORE_KEY);
+        if (storedScore !== null && !isNaN(parseInt(storedScore, 10))) playerScore = Math.max(0, parseInt(storedScore, 10));
+
+        const sn = localStorage.getItem(STREAK_NOW_KEY);
+        if (sn !== null && !isNaN(parseInt(sn, 10))) streakNow = Math.max(0, parseInt(sn, 10));
+
+        const sb = localStorage.getItem(STREAK_BEST_KEY);
+        if (sb !== null && !isNaN(parseInt(sb, 10))) streakBest = Math.max(0, parseInt(sb, 10));
+
+        const c = localStorage.getItem(COINS_KEY);
+        if (c !== null && !isNaN(parseInt(c, 10))) coins = Math.max(0, parseInt(c, 10));
+
+        const os = localStorage.getItem(OWNED_SKINS_KEY);
+        if (os) {
+          const parsed = JSON.parse(os);
+          if (parsed && typeof parsed === "object") ownedSkins = { white: true, ...parsed };
+          ownedSkins.white = true;
+        }
+
+        const eq = localStorage.getItem(EQUIPPED_SKIN_KEY);
+        if (eq && typeof eq === "string" && ownedSkins[eq]) equippedSkinId = eq;
+      } catch (e) {}
+
+      playerNameInput.value = playerName;
+      updateScoreAndLevelUI();
+      updateStreakUI();
+      updateCoinsUI();
+      renderShop();
+    })();
+
+    function savePlayerName() { try { localStorage.setItem(NAME_KEY, playerName); } catch (e) {} }
+    function savePlayerScore() { try { localStorage.setItem(SCORE_KEY, String(playerScore)); } catch (e) {} }
+    function saveStreaks() {
+      try {
+        localStorage.setItem(STREAK_NOW_KEY, String(streakNow));
+        localStorage.setItem(STREAK_BEST_KEY, String(streakBest));
+      } catch(e) {}
+    }
+
+    function updateScoreAndLevelUI() {
+      onlineScoreValue.textContent = playerScore;
+      const info = getLevelInfo(playerScore);
+      onlineLevelText.textContent = `Nivell ${info.level} (${info.rangeText})`;
+      if (info.max === null) {
+        onlineProgressText.textContent = info.progressText;
+        onlineProgressBarInner.style.width = "100%";
+      } else {
+        onlineProgressText.textContent = info.progressText;
+        const pct = Math.max(0, Math.min(100, info.percent || 0));
+        onlineProgressBarInner.style.width = pct + "%";
+      }
+    }
+
+    function updateStreakUI() {
+      streakNowEl.textContent = String(streakNow);
+      streakBestEl.textContent = String(streakBest);
+    }
+
+    // ===== Modal botiga =====
+    function openShop() {
+      ensureAudio();
+      shopModal.classList.remove("hidden");
+      shopModal.setAttribute("aria-hidden", "false");
+      updateCoinsUI();
+      renderShop();
+    }
+    function closeShop() {
+      shopModal.classList.add("hidden");
+      shopModal.setAttribute("aria-hidden", "true");
+    }
+
+    btnOpenShop.addEventListener("click", openShop);
+    btnCloseShop.addEventListener("click", closeShop);
+    shopModal.addEventListener("click", (e) => { if (e.target === shopModal) closeShop(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !shopModal.classList.contains("hidden")) closeShop(); });
+
+    // Validació nom
+    playerNameInput.addEventListener("input", () => {
+      const raw = playerNameInput.value;
+      const clean = raw.replace(/[^A-Za-z]/g, "");
+      if (clean !== raw) {
+        const pos = playerNameInput.selectionStart;
+        playerNameInput.value = clean;
+        playerNameInput.selectionStart = playerNameInput.selectionEnd = Math.max(pos - 1, 0);
+      }
+    });
+
+    playerNameInput.addEventListener("blur", () => {
+      let val = playerNameInput.value.trim();
+      if (!val) { playerName = "Tu"; playerNameInput.value = playerName; }
+      else playerName = val;
+      savePlayerName();
+    });
+
+    // Comparteix
+    btnShare.addEventListener("click", async () => {
+      ensureAudio();
+      const url = window.location.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast("Enllaç copiat!");
+      } catch (e) {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); showToast("Enllaç copiat!"); }
+        catch (err) { showToast("No s'ha pogut copiar"); }
+        document.body.removeChild(ta);
+      }
+    });
+
+    // ===== ESTAT DEL JOC =====
+    let isPlaying = false;
+    let isOnline = false;
+    let targetScore = 7;
+    let speedFactor = 1;
+    let opponentName = "Jugador 2";
+    let opponentScoreFake = 0;
+
+    let selectedType = null;
+    let selectedMode = null;
+
+    const paddleWidth = 14;
+    const paddleHeight = 90;
+    const basePaddleSpeed = 6;
+    const baseBallSpeed = 5;
+
+    let paddleSpeed = basePaddleSpeed;
+    let initialBallSpeed = baseBallSpeed;
+
+    const leftPaddle = { x: 40, y: canvas.height/2 - paddleHeight/2, vy: 0 };
+    const rightPaddle = { x: canvas.width - 40 - paddleWidth, y: canvas.height/2 - paddleHeight/2, vy: 0 };
+    const ball = { x: canvas.width/2, y: canvas.height/2, vx: baseBallSpeed, vy: baseBallSpeed };
+
+    let scoreLeft = 0;
+    let scoreRight = 0;
+
+    let lastGameConfig = {
+      isOnline: false,
+      targetScore: 7,
+      speedFactor: 1,
+      modeName: "Clàssic",
+      opponentName: "Jugador 2",
+      selectedMode: "classic"
+    };
+
+    // ===== USERNAMES =====
+    const usernames = [
+      "ShadowFox","PixelNinja","LunaWave","TurboKoala","NightRider","StarBlazer",
+      "NeoCatalan","GhostCoder","AquaStorm","SilentArrow","NovaSoul","QuantumBee",
+      "RubyFalcon","EchoKnight","FrostByte","SolarDrift","CosmicOwl","TurboPenguin",
+      "MangoRocket","GlitchWizard","JellySamurai","IronTurtle","ZenRaccoon","VortexWolf",
+      "CobaltTiger","PixelDragon","GhostPanda","RapidFalcon","MoonSprinter","LazyNinja",
+      "RedPhoenix","BlueMeteor","CoffeeByte","AstroMole","JumperCat","SilentMeteor",
+      "CrystalShark","GoldenKite","NeonSparrow","StormHamster","RocketOtter","BlitzLlama",
+      "GalaxyYak","CleverMantis","WindViper","TurboGecko","CosmicBee","DriftPigeon",
+      "ShadowYak","PixelJaguar","NinjaSeal","FuzzyDragon","MagmaKoala","SilverBadger",
+      "QuantumHawk","SushiKnight","CyberCobra","StormFox","NovaRhino","GlitchRaven",
+      "JellyMeteor","IronFalcon","ZenMarmot","VortexOtter","CobaltShark","PixelWombat",
+      "GhostMantis","RapidKangaroo","MoonOtter","LazyMeteor","RedRaptor","BlueComet",
+      "CoffeePanda","AstroStag","JumperYak","SilentRaven","CrystalFox","GoldenWolf",
+      "NeonCrab","StormPuffin","RocketLynx","BlitzKoala","GalaxyPanda","CleverSeal",
+      "WindYak","TurboStork","CosmicRhino","DriftLemur","ShadowLynx","PixelRhino",
+      "NinjaYak","FuzzyKoala","MagmaStag","SilverRhino","QuantumOtter","SushiPigeon",
+      "CyberYak","StormYak"
+    ];
+    function getRandomUsername() { return usernames[Math.floor(Math.random() * usernames.length)]; }
+    function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    function generateFakeOpponentScore() {
+      const info = getLevelInfo(playerScore);
+      let fake = 0;
+      if (info.level === 1) fake = randomInt(0, 89);
+      else if (info.level === 2) fake = randomInt(90, 199);
+      else if (info.level === 3) fake = randomInt(200, 499);
+      else if (info.level === 4) fake = randomInt(500, 1000);
+      else {
+        const lowerMin = 1001;
+        const lowerMax = Math.max(playerScore, lowerMin);
+        const higherMin = Math.max(playerScore + 1, lowerMin);
+        const higherMax = 1800;
+        const r = Math.random();
+        if (r < 0.7 || higherMin > higherMax) fake = randomInt(lowerMin, lowerMax);
+        else fake = randomInt(higherMin, higherMax);
+      }
+      opponentScoreFake = fake;
+    }
+
+    // ===== BOT =====
+    const bot = { mode: "normal", targetY: canvas.height / 2, reactionTimer: 0, changeModeTimer: 0 };
+    const defaultBotDifficulty = { errorScale: 1, forcedErrorChance: 0.15, speedScale: 1, reactionScale: 1 };
+    let botDifficulty = { ...defaultBotDifficulty };
+
+    function randomBotMode() {
+      const r = Math.random();
+      if (r < 0.5) return "normal";
+      if (r < 0.8) return "aggressive";
+      return "lazy";
+    }
+
+    function updateBotDifficultyFromScore() {
+      let s = playerScore;
+      if (s <= 89) {
+        botDifficulty.errorScale = 2.5; botDifficulty.forcedErrorChance = 0.25; botDifficulty.speedScale = 0.6; botDifficulty.reactionScale = 1.5;
+      } else if (s <= 199) {
+        botDifficulty.errorScale = 1.5; botDifficulty.forcedErrorChance = 0.20; botDifficulty.speedScale = 0.8; botDifficulty.reactionScale = 1.2;
+      } else if (s <= 499) {
+        botDifficulty = { ...defaultBotDifficulty };
+      } else if (s <= 1000) {
+        botDifficulty.errorScale = 0.7; botDifficulty.forcedErrorChance = 0.10; botDifficulty.speedScale = 1.2; botDifficulty.reactionScale = 0.85;
+      } else {
+        botDifficulty.errorScale = 0.5; botDifficulty.forcedErrorChance = 0.07; botDifficulty.speedScale = 1.5; botDifficulty.reactionScale = 0.7;
+      }
+    }
+
+    function botErrorOffset() {
+      let range = 25;
+      if (bot.mode === "lazy") range = 45;
+      if (bot.mode === "aggressive") range = 20;
+      const speed = Math.sqrt(ball.vx*ball.vx + ball.vy*ball.vy);
+      if (speed > initialBallSpeed * 1.3) range += 20;
+      range *= botDifficulty.errorScale;
+      return (Math.random() * 2 - 1) * range;
+    }
+
+    function resetBotState() {
+      bot.mode = randomBotMode();
+      bot.targetY = canvas.height/2;
+      const base = randomInt(6, 14);
+      bot.reactionTimer = Math.max(1, Math.round(base * botDifficulty.reactionScale));
+      bot.changeModeTimer = randomInt(180, 420);
+    }
+
+    function updateBot() {
+      rightPaddle.vy = 0;
+      const center = rightPaddle.y + paddleHeight / 2;
+
+      bot.changeModeTimer--;
+      if (bot.changeModeTimer <= 0) {
+        bot.mode = randomBotMode();
+        bot.changeModeTimer = randomInt(240, 480);
+      }
+
+      if (ball.vx <= 0) {
+        const diff = (canvas.height/2) - center;
+        const baseFactor = (bot.mode === "lazy") ? 0.35 : 0.5;
+        const factor = baseFactor * botDifficulty.speedScale;
+        if (Math.abs(diff) > 6) rightPaddle.vy = diff > 0 ? paddleSpeed * factor : -paddleSpeed * factor;
+        return;
+      }
+
+      bot.reactionTimer--;
+      if (bot.reactionTimer <= 0) {
+        const minBase = (bot.mode === "aggressive") ? 3 : 6;
+        const maxBase = (bot.mode === "lazy") ? 16 : 10;
+        const baseVal = randomInt(minBase, maxBase);
+        bot.reactionTimer = Math.max(1, Math.round(baseVal * botDifficulty.reactionScale));
+        bot.targetY = ball.y + botErrorOffset();
+        if (Math.random() < 0.08) bot.targetY += (Math.random() < 0.5 ? -1 : 1) * randomInt(20, 60);
+      }
+
+      const nearRightSide = ball.x > canvas.width * 0.66;
+      const speed = Math.abs(ball.vx);
+      if (nearRightSide && speed > initialBallSpeed && Math.random() < botDifficulty.forcedErrorChance) {
+        if (Math.random() < 0.5) rightPaddle.vy = 0;
+        else rightPaddle.vy = paddleSpeed * (ball.y < center ? 1 : -1) * botDifficulty.speedScale;
+        return;
+      }
+
+      const diffY = bot.targetY - center;
+      if (Math.abs(diffY) > 4) {
+        let baseFactor = 0.9;
+        if (bot.mode === "lazy") baseFactor = 0.7;
+        if (bot.mode === "aggressive") baseFactor = 1.1;
+        const factor = baseFactor * botDifficulty.speedScale;
+        rightPaddle.vy = diffY > 0 ? paddleSpeed * factor : -paddleSpeed * factor;
+      } else {
+        rightPaddle.vy = 0;
+      }
+    }
+
+    // ===== Menú =====
+    function enableModeButtons() { [btnModeClassic, btnModeRapid, btnModeLong].forEach(b => b.classList.remove("btn-disabled")); }
+    function clearTypeSelection() { btnType2P.classList.remove("btn-selected"); btnTypeOnline.classList.remove("btn-selected"); }
+    function clearModeSelection() { btnModeClassic.classList.remove("btn-selected"); btnModeRapid.classList.remove("btn-selected"); btnModeLong.classList.remove("btn-selected"); }
+    function updateStartButtonState() { (selectedType && selectedMode) ? btnStartGame.classList.remove("btn-disabled") : btnStartGame.classList.add("btn-disabled"); }
+
+    btnType2P.addEventListener("click", () => {
+      ensureAudio();
+      selectedType = "2p";
+      isOnline = false;
+      clearTypeSelection();
+      btnType2P.classList.add("btn-selected");
+      enableModeButtons();
+      opponentName = "Jugador 2";
+      updateStartButtonState();
+    });
+
+    btnTypeOnline.addEventListener("click", () => {
+      ensureAudio();
+      selectedType = "online";
+      isOnline = true;
+      clearTypeSelection();
+      btnTypeOnline.classList.add("btn-selected");
+      enableModeButtons();
+      startFakeMatchmaking();
+      updateStartButtonState();
+    });
+
+    function selectMode(modeKey) {
+      if (!selectedType) return;
+      selectedMode = modeKey;
+      clearModeSelection();
+
+      let modeNameText = "";
+      if (modeKey === "classic") { btnModeClassic.classList.add("btn-selected"); targetScore = 7; speedFactor = 1; modeNameText = "Clàssic"; }
+      else if (modeKey === "rapid") { btnModeRapid.classList.add("btn-selected"); targetScore = 7; speedFactor = 1.5; modeNameText = "Ràpid (velocitat x1.5)"; }
+      else if (modeKey === "long") { btnModeLong.classList.add("btn-selected"); targetScore = 14; speedFactor = 1; modeNameText = "Long"; }
+
+      lastGameConfig = { isOnline, targetScore, speedFactor, modeName: modeNameText, opponentName, selectedMode };
+      updateStartButtonState();
+    }
+
+    btnModeClassic.addEventListener("click", () => { ensureAudio(); selectMode("classic"); });
+    btnModeRapid.addEventListener("click", () => { ensureAudio(); selectMode("rapid"); });
+    btnModeLong.addEventListener("click", () => { ensureAudio(); selectMode("long"); });
+
+    btnStartGame.addEventListener("click", () => { ensureAudio(); if (!selectedType || !selectedMode) return; startGame(); });
+
+    // ===== Matchmaking fals =====
+    let dotsInterval = null;
+    function startFakeMatchmaking() {
+      matchmakingOverlay.classList.remove("hidden");
+      let step = 0;
+      if (dotsInterval) clearInterval(dotsInterval);
+      dotsInterval = setInterval(() => {
+        const dots = ["·", "··", "···", "····"];
+        dotsEl.textContent = dots[step % dots.length];
+        step++;
+      }, 300);
+
+      const delay = randomInt(2000, 5000);
+      setTimeout(() => {
+        opponentName = getRandomUsername();
+        generateFakeOpponentScore();
+        matchmakingOverlay.classList.add("hidden");
+        clearInterval(dotsInterval);
+      }, delay);
+    }
+
+    // ===== Partida =====
+    function applySpeedFactor() { paddleSpeed = basePaddleSpeed * speedFactor; initialBallSpeed = baseBallSpeed * speedFactor; }
+
+    function resetBall(direction) {
+      ball.x = canvas.width/2;
+      ball.y = canvas.height/2;
+      const angle = Math.random() * 0.6 - 0.3;
+      ball.vx = initialBallSpeed * direction;
+      ball.vy = initialBallSpeed * angle * 2;
+      resetBotState();
+    }
+
+    function resetScoresAndPositions() {
+      scoreLeft = 0;
+      scoreRight = 0;
+      leftPaddle.y = canvas.height/2 - paddleHeight/2;
+      rightPaddle.y = canvas.height/2 - paddleHeight/2;
+      resetBall(Math.random() > 0.5 ? 1 : -1);
+    }
+
+    function startGame() {
+      applySpeedFactor();
+      if (isOnline) { updateBotDifficultyFromScore(); generateFakeOpponentScore(); }
+      resetScoresAndPositions();
+      resetBotState();
+      mainMenu.classList.add("hidden");
+      endScreen.classList.add("hidden");
+      isPlaying = true;
+    }
+
+    function applyStreak(playerWon) {
+      if (!isOnline) return;
+      if (playerWon) {
+        streakNow += 1;
+        if (streakNow > streakBest) streakBest = streakNow;
+      } else {
+        streakNow = 0;
+      }
+      saveStreaks();
+      updateStreakUI();
+    }
+
+    function updateOnlineScore(playerWon) {
+      if (!isOnline) return;
+      const beforeLevel = getLevelInfo(playerScore).level;
+
+      let delta = 0;
+      if (selectedMode === "classic") delta = playerWon ? 30 : -10;
+      else if (selectedMode === "rapid") delta = playerWon ? 15 : -7;
+      else if (selectedMode === "long") delta = playerWon ? 55 : -18;
+
+      playerScore += delta;
+      if (playerScore < 0) playerScore = 0;
+
+      savePlayerScore();
+      updateScoreAndLevelUI();
+
+      const afterLevel = getLevelInfo(playerScore).level;
+      if (afterLevel > beforeLevel) {
+        showToast(`Nivell ${afterLevel}! 🔥`);
+        pulseLevelUI();
+      }
+    }
+
+    function awardCoinsFromMatch() {
+      if (!isOnline) return { gained: 0, raw: 0 };
+      const raw = (scoreLeft * 10) - (scoreRight * 7);
+      const gained = Math.max(0, raw);
+      coins += gained;
+      saveCoins();
+      updateCoinsUI();
+      return { gained, raw };
+    }
+
+    function endGame(winnerLabel, playerWonOnline) {
+      isPlaying = false;
+
+      let coinInfo = { gained: 0, raw: 0 };
+      if (typeof playerWonOnline === "boolean") {
+        applyStreak(playerWonOnline);
+        updateOnlineScore(playerWonOnline);
+        coinInfo = awardCoinsFromMatch();
+      }
+
+      winnerText.textContent = winnerLabel + " ha guanyat!";
+      modeInfoText.textContent = (lastGameConfig.modeName || "") + (lastGameConfig.isOnline ? " · Contra un bot" : " · 2 jugadors");
+
+      if (isOnline) {
+        if (coinInfo.raw < 0) coinsEndText.textContent = `Monedes: ${scoreLeft}·(+10) − ${scoreRight}·(−7) = ${coinInfo.raw} → guany 0`;
+        else coinsEndText.textContent = `Monedes guanyades: ${coinInfo.gained} (total: ${coins})`;
+
+        streakEndText.textContent = `Ratxa actual: ${streakNow} · Millor ratxa: ${streakBest}`;
+        if (playerWonOnline) sfxWin(); else sfxLose();
+      } else {
+        coinsEndText.textContent = "";
+        streakEndText.textContent = "";
+      }
+
+      endScreen.classList.remove("hidden");
+    }
+
+    btnReplay.addEventListener("click", () => {
+      ensureAudio();
+      isOnline = lastGameConfig.isOnline;
+      opponentName = lastGameConfig.opponentName;
+      targetScore = lastGameConfig.targetScore;
+      speedFactor = lastGameConfig.speedFactor;
+      selectedMode = lastGameConfig.selectedMode;
+      applySpeedFactor();
+      if (isOnline) { updateBotDifficultyFromScore(); generateFakeOpponentScore(); }
+      resetScoresAndPositions();
+      endScreen.classList.add("hidden");
+      isPlaying = true;
+    });
+
+    btnBackToMenu.addEventListener("click", () => { ensureAudio(); window.location.reload(); });
+
+    // ===== Controls =====
+    const keys = { w: false, s: false, ArrowUp: false, ArrowDown: false };
+    document.addEventListener("keydown", e => { if (e.key in keys) keys[e.key] = true; });
+    document.addEventListener("keyup", e => { if (e.key in keys) keys[e.key] = false; });
+
+    function checkScore() {
+      if (scoreLeft >= targetScore || scoreRight >= targetScore) {
+        let winnerLabel;
+        let playerWonOnline = null;
+
+        if (scoreLeft > scoreRight) {
+          winnerLabel = isOnline ? playerName : "Jugador 1";
+          if (isOnline) playerWonOnline = true;
+        } else {
+          winnerLabel = isOnline ? opponentName : "Jugador 2";
+          if (isOnline) playerWonOnline = false;
+        }
+        endGame(winnerLabel, playerWonOnline);
+      }
+    }
+
+    // ===== Update =====
+    function update() {
+      if (!isPlaying) return;
+
+      leftPaddle.vy = 0;
+      rightPaddle.vy = 0;
+
+      if (keys.w) leftPaddle.vy = -paddleSpeed;
+      if (keys.s) leftPaddle.vy = paddleSpeed;
+
+      if (isOnline) updateBot();
+      else {
+        if (keys.ArrowUp) rightPaddle.vy = -paddleSpeed;
+        if (keys.ArrowDown) rightPaddle.vy = paddleSpeed;
+      }
+
+      leftPaddle.y += leftPaddle.vy;
+      rightPaddle.y += rightPaddle.vy;
+
+      leftPaddle.y = Math.max(0, Math.min(canvas.height - paddleHeight, leftPaddle.y));
+      rightPaddle.y = Math.max(0, Math.min(canvas.height - paddleHeight, rightPaddle.y));
+
+      ball.x += ball.vx;
+      ball.y += ball.vy;
+
+      if (ball.y - 9 <= 0 || ball.y + 9 >= canvas.height) { ball.vy *= -1; sfxHit(); }
+
+      if (ball.x - 9 <= leftPaddle.x + paddleWidth && ball.y >= leftPaddle.y && ball.y <= leftPaddle.y + paddleHeight && ball.vx < 0) {
+        ball.vx *= -1;
+        const intersection = (ball.y - (leftPaddle.y + paddleHeight/2)) / (paddleHeight/2);
+        ball.vy = initialBallSpeed * intersection;
+        sfxHit();
+      }
+
+      if (ball.x + 9 >= rightPaddle.x && ball.y >= rightPaddle.y && ball.y <= rightPaddle.y + paddleHeight && ball.vx > 0) {
+        ball.vx *= -1;
+        const intersection = (ball.y - (rightPaddle.y + paddleHeight/2)) / (paddleHeight/2);
+        ball.vy = initialBallSpeed * intersection;
+        sfxHit();
+      }
+
+      if (ball.x + 9 < 0) { scoreRight++; sfxPoint(); checkScore(); resetBall(1); }
+      if (ball.x - 9 > canvas.width) { scoreLeft++; sfxPoint(); checkScore(); resetBall(-1); }
+    }
+
+    // ===== Dibuix =====
+    function drawCourt() {
+      ctx.fillStyle = "#050505";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      ctx.setLineDash([10,10]);
+      ctx.strokeStyle = "#333";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(canvas.width/2,0);
+      ctx.lineTo(canvas.width/2,canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawPaddles() {
+      const equipped = getSkinById(equippedSkinId);
+
+      // Pala del jugador
+      if (equipped.type === "image") {
+        const entry = skinImages[equipped.id];
+        if (entry && entry.ready) {
+          ctx.drawImage(entry.img, leftPaddle.x, leftPaddle.y, paddleWidth, paddleHeight);
+        } else {
+          // fallback si no carrega
+          ctx.fillStyle = "#e5e5e5";
+          ctx.fillRect(leftPaddle.x, leftPaddle.y, paddleWidth, paddleHeight);
+        }
+      } else {
+        ctx.fillStyle = equipped.color || "#e5e5e5";
+        ctx.fillRect(leftPaddle.x, leftPaddle.y, paddleWidth, paddleHeight);
+      }
+
+      // Pala rival
+      ctx.fillStyle = "#e5e5e5";
+      ctx.fillRect(rightPaddle.x, rightPaddle.y, paddleWidth, paddleHeight);
+    }
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, 9, 0, Math.PI*2);
+      ctx.fillStyle = "#facc15";
+      ctx.fill();
+    }
+
+    function drawScoreAndNames() {
+      ctx.fillStyle = "#f5f5f5";
+      ctx.textAlign = "center";
+
+      ctx.font = "16px system-ui";
+      ctx.fillText(playerName, canvas.width/2 - 140, 30);
+      ctx.fillText(isOnline ? opponentName : "Jugador 2", canvas.width/2 + 140, 30);
+
+      ctx.font = "11px system-ui";
+      ctx.fillText("Punts: " + playerScore, canvas.width/2 - 140, 44);
+      if (isOnline) ctx.fillText("Punts: " + opponentScoreFake, canvas.width/2 + 140, 44);
+
+      ctx.fillStyle = "#facc15";
+      ctx.fillText("Monedes: " + coins, canvas.width/2, 44);
+      ctx.fillStyle = "#f5f5f5";
+
+      ctx.font = "bold 40px system-ui";
+      ctx.fillText(scoreLeft, canvas.width/2 - 60, 70);
+      ctx.fillText(scoreRight, canvas.width/2 + 60, 70);
+
+      ctx.font = "12px system-ui";
+      ctx.globalAlpha = 0.8;
+      ctx.fillText(lastGameConfig.modeName || "", canvas.width/2, canvas.height - 30);
+      if (isOnline) ctx.fillText("Ratxa: " + streakNow + " (millor " + streakBest + ")", canvas.width/2, canvas.height - 15);
+      ctx.globalAlpha = 1;
+    }
+
+    function render() { drawCourt(); drawPaddles(); drawBall(); drawScoreAndNames(); }
+
+    // ===== Loop =====
+    function gameLoop() { update(); render(); requestAnimationFrame(gameLoop); }
+    gameLoop();
+
+    // ===== Inicial =====
+    function initHeaderCoins() { updateCoinsUI(); }
+    initHeaderCoins();
+
+    // àudio
+    document.addEventListener("pointerdown", () => ensureAudio(), { once: true });
+
+    // Start button state
+    updateStartButtonState();
+  </script>
+</body>
+</html>
