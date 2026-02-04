@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Joc de pescar (4 capes)</title>
+  <title>Joc de pescar (5 capes + pop)</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -102,7 +102,7 @@
       <div class="help">
         <span>Teclat: ← → per moure</span>
         <span>Espai / ↓ per baixar l’ham</span>
-        <span>Capes: 🥾 / 🐟 / 🗑️ / 🐠</span>
+        <span>Capes: 🥾 / 🐟 / 🗑️ / 🐠 / 🐙 (cada 17,5s)</span>
       </div>
 
       <div class="touchbar">
@@ -152,18 +152,19 @@
   const BOAT_Y = SEA_Y - 22;
   const MAX_LINE = H - 80;
 
-  // ===== 4 CAPES =====
-  // Zona d'aigua disponible (de SEA_Y fins a prop del fons)
+  // ===== 5 CAPES =====
   const WATER_TOP = SEA_Y + 20;
   const WATER_BOTTOM = H - 120;
   const WATER_H = WATER_BOTTOM - WATER_TOP;
+
   const LAYERS = [
-    { id: "boot",  emoji:"🥾", points:-12, r:18 }, // 1a capa
-    { id: "fish",  emoji:"🐟", points:+10, r:16 }, // 2a capa
-    { id: "trash", emoji:"🗑️", points:-18, r:18 }, // 3a capa
-    { id: "gold",  emoji:"🐠", points:+25, r:18 }, // 4a capa
+    { id:"boot",    emoji:"🥾", points:-12, r:18 }, // 1a
+    { id:"fish",    emoji:"🐟", points:+10, r:16 }, // 2a
+    { id:"trash",   emoji:"🗑️", points:-18, r:18 }, // 3a
+    { id:"gold",    emoji:"🐠", points:+25, r:18 }, // 4a
+    { id:"octopus", emoji:"🐙", points:+75, r:36 }, // 5a (x2)
   ];
-  const LAYER_H = WATER_H / 4;
+  const LAYER_H = WATER_H / 5;
 
   function layerRange(i){
     const top = WATER_TOP + i*LAYER_H;
@@ -171,6 +172,7 @@
     return { top, bottom };
   }
   function randIn(a,b){ return a + Math.random()*(b-a); }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
   // Game state
   const state = {
@@ -178,28 +180,32 @@
     paused: false,
     timeLeft: 60,
     score: 0,
-    best: Number(localStorage.getItem('fishing_best_4layers') || 0),
+    best: Number(localStorage.getItem('fishing_best_5layers') || 0),
     combo: 0,
+
     lineLen: 0,
     lineSpeed: 520,
     lowering: false,
     raising: false,
     caught: null,
+
     objects: [],
     bubbles: [],
+
     spawnT: 0,
-    // spawns per capa (totes alhora, però amb aleatorietat)
     spawnEvery: 0.9,
+
     boatX: W/2,
     boatV: 0,
     boatMaxV: 520,
     boatAccel: 2200,
-    boatFriction: 0.88
+    boatFriction: 0.88,
+
+    // POP
+    lastOctopus: 0
   };
 
   ui.best.textContent = state.best;
-
-  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
 
   // ===== Input =====
   const keys = { left:false, right:false, hook:false };
@@ -241,8 +247,7 @@
     ui.btnPause.textContent = state.paused ? 'Reprèn' : 'Pausa';
   }
 
-  // ===== Spawning per capa =====
-  // Cada objecte "sabe" a quina capa pertany i només es mou dins la seva franja Y
+  // ===== Spawning =====
   function spawnOneInLayer(layerIndex){
     const L = LAYERS[layerIndex];
     const { top, bottom } = layerRange(layerIndex);
@@ -250,10 +255,9 @@
     const fromLeft = Math.random() < 0.5;
     const x = fromLeft ? -30 : W + 30;
 
-    // y aleatòria dins la franja de la capa (amb una mica de marge)
     const y = randIn(top + 10, bottom - 10);
 
-    // velocitat segons capa (més profund = lleugerament més lent)
+    // velocitat: a més profund, més lent
     const base = 95 + Math.random()*90;
     const depthFactor = 1 - layerIndex*0.07;
     const sp = base * depthFactor;
@@ -272,12 +276,19 @@
     });
   }
 
+  // Spawn normal: NOMÉS capes 0..3
   function spawnTick(){
-    // A cada tick, fem spawn a capes diferents amb probabilitats lleugerament diferents
-    // (pots ajustar-ho fàcilment)
     for (let i=0; i<4; i++){
-      const p = [0.55, 0.75, 0.55, 0.45][i]; // freq relativa per capa
+      const p = [0.55, 0.75, 0.55, 0.45][i];
       if (Math.random() < p) spawnOneInLayer(i);
+    }
+  }
+
+  // Pop cada 17.5s: NOMÉS capa 4
+  function spawnOctopus(nowS){
+    if (nowS - state.lastOctopus >= 17.5){
+      state.lastOctopus = nowS;
+      spawnOneInLayer(4);
     }
   }
 
@@ -378,7 +389,7 @@
 
     if (state.score > state.best){
       state.best = state.score;
-      localStorage.setItem('fishing_best_4layers', String(state.best));
+      localStorage.setItem('fishing_best_5layers', String(state.best));
       ui.best.textContent = state.best;
     }
     ui.score.textContent = state.score;
@@ -406,7 +417,6 @@
       const o = state.objects[i];
       o.x += o.vx*dt;
 
-      // wobble vertical suau però CLAMP dins la franja de la capa
       const { top, bottom } = layerRange(o.layerIndex);
       const wob = Math.sin((nowS - o.t0) * (1.6*o.wobble)) * o.bob;
       o.y += wob*dt*0.25;
@@ -418,21 +428,17 @@
 
   // ===== Drawing =====
   function drawSea(){
-    // CAPES visibles
     ctx.save();
 
-    // línia d'aigua
     ctx.fillStyle = "rgba(255,255,255,.10)";
     ctx.fillRect(0, SEA_Y-1, W, 2);
 
-    // franges: 4 capes (subtils)
-    for (let i=0;i<4;i++){
+    for (let i=0;i<5;i++){
       const { top, bottom } = layerRange(i);
-      const a = 0.08 + i*0.02; // més fosc a mida que baixes
+      const a = 0.07 + i*0.02;
       ctx.fillStyle = `rgba(255,255,255,${a})`;
       ctx.fillRect(0, top, W, bottom-top);
 
-      // etiqueta emoji a l'esquerra
       ctx.globalAlpha = 0.65;
       ctx.font = "18px system-ui, Apple Color Emoji, Segoe UI Emoji";
       ctx.textAlign = "left";
@@ -440,8 +446,7 @@
       ctx.fillText(LAYERS[i].emoji, 14, (top+bottom)/2);
       ctx.globalAlpha = 1;
 
-      // línia separadora
-      if (i<3){
+      if (i<4){
         ctx.fillStyle = "rgba(255,255,255,.10)";
         ctx.fillRect(0, bottom-1, W, 1);
       }
@@ -510,15 +515,20 @@
 
   function drawObjects(){
     ctx.save();
-    ctx.font = "28px system-ui, Apple Color Emoji, Segoe UI Emoji";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
     for (const o of state.objects){
+      // pop més gran
+      const fontSize = (o.layerIndex === 4) ? 56 : 28;
+      ctx.font = `${fontSize}px system-ui, Apple Color Emoji, Segoe UI Emoji`;
       ctx.globalAlpha = 0.95;
       ctx.fillText(o.emoji, o.x, o.y);
     }
+
     if (state.caught){
+      const fontSize = (state.caught.layerIndex === 4) ? 56 : 28;
+      ctx.font = `${fontSize}px system-ui, Apple Color Emoji, Segoe UI Emoji`;
       ctx.globalAlpha = 1;
       ctx.fillText(state.caught.emoji, state.caught.x, state.caught.y);
     }
@@ -541,7 +551,6 @@
   function draw(){
     ctx.clearRect(0,0,W,H);
 
-    // fons marí suau
     const g = ctx.createLinearGradient(0,0,0,H);
     g.addColorStop(0, "rgba(255,255,255,.05)");
     g.addColorStop(1, "rgba(0,0,0,.25)");
@@ -569,6 +578,7 @@
     }
   }
 
+  // roundRect polyfill
   if (!CanvasRenderingContext2D.prototype.roundRect){
     CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
       r = Math.min(r, w/2, h/2);
@@ -599,7 +609,6 @@
         state.timeLeft = Math.max(0, state.timeLeft - dec);
         ui.time.textContent = state.timeLeft;
 
-        // mica més ràpid al final
         state.spawnEvery = clamp(0.95 - (60 - state.timeLeft)*0.004, 0.45, 0.95);
 
         if (state.timeLeft === 0) endGame();
@@ -608,14 +617,18 @@
       state.spawnT += dt;
       if (state.spawnT >= state.spawnEvery){
         state.spawnT = 0;
-        spawnTick();
+        spawnTick(); // només 4 capes
       }
 
-      const nowS = now/1000;
+      const nowS = now / 1000;
+
       updateBoat(dt);
       updateHook(dt);
       checkCatch();
       updateObjects(dt, nowS);
+
+      spawnOctopus(nowS); // pop cada 17.5s
+
       spawnBubbles(dt);
 
       ui.score.textContent = state.score;
@@ -655,11 +668,20 @@
     state.boatX = W/2;
     state.boatV = 0;
 
+    // pop: reiniciem el temporitzador perquè no surti immediatament
+    state.lastOctopus = performance.now()/1000;
+
     ui.time.textContent = state.timeLeft;
     ui.score.textContent = state.score;
     ui.combo.textContent = state.combo;
     ui.best.textContent = state.best;
   }
+
+  ui.btnPause.addEventListener('click', togglePause);
+  ui.btnRestart.addEventListener('click', restart);
+
+  ui.btnPlayAgain.addEventListener('click', () => { ui.overlay.classList.remove('show'); restart(); });
+  ui.btnClose.addEventListener('click', () => ui.overlay.classList.remove('show'));
 
   restart();
   requestAnimationFrame(loop);
