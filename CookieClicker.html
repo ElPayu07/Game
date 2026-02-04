@@ -45,6 +45,8 @@
             display: flex;
             gap: 15px;
             margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .control-btn {
@@ -303,6 +305,7 @@
             justify-content: center;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
 
         .filtre-btn {
@@ -323,6 +326,13 @@
         .filtre-btn.active {
             background-color: #d2691e;
             color: white;
+        }
+
+        .format-explicacio {
+            font-size: 0.8rem;
+            color: #8b4513;
+            text-align: center;
+            margin-top: 5px;
         }
 
         @media (max-width: 1100px) {
@@ -358,6 +368,11 @@
                 flex-direction: column;
                 gap: 10px;
             }
+            
+            .filtre-millores {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
@@ -369,6 +384,11 @@
             <button class="control-btn" onclick="guardarProgres()">Guardar Progrés</button>
             <button class="control-btn" onclick="carregarProgres()">Carregar Progrés</button>
             <button class="control-btn" onclick="resetJoc()">Reiniciar Joc</button>
+            <button class="control-btn" onclick="exportarDades()">Exportar Dades</button>
+            <button class="control-btn" onclick="importarDades()">Importar Dades</button>
+        </div>
+        <div class="format-explicacio">
+            Format numèric: K (mil), M (milions), B (bilions), T (trilions), Qa (quadrilions), Qi (quintilions)
         </div>
     </header>
 
@@ -495,6 +515,46 @@
         const milloresContainer = document.getElementById('millores-container');
         const estatGuardatElement = document.getElementById('estat-guardat');
 
+        // Funció per formatar números grans a format curt
+        function formatNumero(num) {
+            if (isNaN(num)) return "0";
+            if (num === 0) return "0";
+            
+            const esNegatiu = num < 0;
+            let valorAbsolut = Math.abs(num);
+            
+            // Definim les unitats
+            const unitats = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+            let unitatIndex = 0;
+            
+            // Reduïm el número fins que sigui menor a 1000 o arribem a la unitat més gran
+            while (valorAbsolut >= 1000 && unitatIndex < unitats.length - 1) {
+                valorAbsolut /= 1000;
+                unitatIndex++;
+            }
+            
+            // Formatem el número amb decimals depenent de la seva mida
+            let decimals;
+            if (valorAbsolut < 10) {
+                decimals = 2;
+            } else if (valorAbsolut < 100) {
+                decimals = 1;
+            } else {
+                decimals = 0;
+            }
+            
+            // Evitem mostrar decimals innecessaris (ex: 1.00K -> 1K)
+            let numeroFormat = valorAbsolut.toFixed(decimals);
+            if (numeroFormat.endsWith('.00')) {
+                numeroFormat = numeroFormat.slice(0, -3);
+            } else if (numeroFormat.endsWith('.0')) {
+                numeroFormat = numeroFormat.slice(0, -2);
+            }
+            
+            const resultat = (esNegatiu ? "-" : "") + numeroFormat + unitats[unitatIndex];
+            return resultat;
+        }
+
         // Funció per calcular el cost actual d'una millora
         function calcularCost(millora) {
             return Math.floor(millora.costBase * Math.pow(factorCost, millora.nivell));
@@ -560,6 +620,7 @@
             milloresFiltrades.forEach(millora => {
                 const costActual = calcularCost(millora);
                 const eficiencia = calcularEficiencia(millora).toFixed(2);
+                const costFormatat = formatNumero(costActual);
                 
                 const milloraElement = document.createElement('div');
                 milloraElement.className = 'millora';
@@ -571,9 +632,9 @@
                         </div>
                         <div class="millora-nivell">Nivell: ${millora.nivell}</div>
                     </div>
-                    <div class="millora-cost">Cost: ${costActual} galetes (Eficiència: ${eficiencia})</div>
+                    <div class="millora-cost">Cost: ${costFormatat} galetes (Eficiència: ${eficiencia})</div>
                     <button class="millora-boto" onclick="comprarMillora(${millora.id})" id="boto-millora-${millora.id}">
-                        Millorar (${millora.valor * (millora.nivell + 1)} ${millora.tipus === 'clic' ? 'per clic' : millora.tipus === 'auto' ? 'per segon' : 'multiplicador'})
+                        Millorar (${formatNumero(millora.valor * (millora.nivell + 1))} ${millora.tipus === 'clic' ? 'per clic' : millora.tipus === 'auto' ? 'per segon' : 'multiplicador'})
                     </button>
                 `;
                 
@@ -620,10 +681,10 @@
 
         // Funció per actualitzar la pantalla
         function actualitzarPantalla() {
-            comptadorElement.textContent = Math.floor(galetes);
-            produccioPerSegonElement.textContent = produccioPerSegon;
-            galetesPerClicElement.textContent = galetesPerClic;
-            clicsTotalsElement.textContent = clicsTotals;
+            comptadorElement.textContent = formatNumero(Math.floor(galetes));
+            produccioPerSegonElement.textContent = formatNumero(produccioPerSegon) + "/s";
+            galetesPerClicElement.textContent = formatNumero(galetesPerClic);
+            clicsTotalsElement.textContent = formatNumero(clicsTotals);
             
             // Actualitzar l'estat dels botons de millores
             millores.forEach(millora => {
@@ -632,13 +693,13 @@
                 
                 if (boto) {
                     boto.disabled = galetes < costActual;
-                    boto.innerHTML = `Millorar (${millora.valor * (millora.nivell + 1)} ${millora.tipus === 'clic' ? 'per clic' : millora.tipus === 'auto' ? 'per segon' : 'multiplicador'})`;
+                    boto.innerHTML = `Millorar (${formatNumero(millora.valor * (millora.nivell + 1))} ${millora.tipus === 'clic' ? 'per clic' : millora.tipus === 'auto' ? 'per segon' : 'multiplicador'})`;
                     
                     // Actualitzar el cost i nivell a la pantalla
                     const milloraElement = boto.parentElement;
                     if (milloraElement.querySelector('.millora-cost')) {
                         const eficiencia = calcularEficiencia(millora).toFixed(2);
-                        milloraElement.querySelector('.millora-cost').textContent = `Cost: ${costActual} galetes (Eficiència: ${eficiencia})`;
+                        milloraElement.querySelector('.millora-cost').textContent = `Cost: ${formatNumero(costActual)} galetes (Eficiència: ${eficiencia})`;
                     }
                     if (milloraElement.querySelector('.millora-nivell')) {
                         milloraElement.querySelector('.millora-nivell').textContent = `Nivell: ${millora.nivell}`;
@@ -666,7 +727,7 @@
         // Funció per crear números flotants quan es clica la galeta
         function crearNumeroFlotant(valor) {
             const flotant = document.createElement('div');
-            flotant.textContent = '+' + valor;
+            flotant.textContent = '+' + formatNumero(valor);
             flotant.style.position = 'absolute';
             flotant.style.color = '#8b4513';
             flotant.style.fontWeight = 'bold';
@@ -777,7 +838,6 @@
             
             localStorage.setItem('galetesClickerProgres', JSON.stringify(dadesJoc));
             mostrarNotificacioGuardat();
-            console.log('Progrés guardat:', dadesJoc);
         }
         
         // Funció per carregar el progrés
@@ -814,7 +874,7 @@
                 actualitzarPantalla();
                 inicialitzarMillores();
                 
-                alert(`Progrés carregat correctament!\nData del desat: ${new Date(dadesJoc.dataGuardat).toLocaleString('ca-ES')}`);
+                alert(`Progrés carregat correctament!\nData del desat: ${new Date(dadesJoc.dataGuardat).toLocaleString('ca-ES')}\nGaletes: ${formatNumero(galetes)}`);
             } catch (error) {
                 console.error('Error carregant progrés:', error);
                 alert('Error carregant el progrés. Les dades poden estar corruptes.');
@@ -881,6 +941,88 @@
                 
                 alert('Joc reiniciat correctament!');
             }
+        }
+
+        // Funció per exportar dades (per a còpia de seguretat)
+        function exportarDades() {
+            const dadesJoc = {
+                galetes: galetes,
+                galetesPerClic: galetesPerClic,
+                produccioPerSegon: produccioPerSegon,
+                clicsTotals: clicsTotals,
+                millores: millores.map(m => ({
+                    id: m.id,
+                    nivell: m.nivell
+                })),
+                dataExportacio: new Date().toISOString()
+            };
+            
+            const dadesString = JSON.stringify(dadesJoc, null, 2);
+            const blob = new Blob([dadesString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `galetes_clicker_backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert(`Dades exportades!\nGaletes: ${formatNumero(galetes)}\nProducció/s: ${formatNumero(produccioPerSegon)}`);
+        }
+
+        // Funció per importar dades
+        function importarDades() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const dadesJoc = JSON.parse(e.target.result);
+                        
+                        if (!confirm(`Importar aquestes dades?\nGaletes: ${formatNumero(dadesJoc.galetes || 0)}\nProducció/s: ${formatNumero(dadesJoc.produccioPerSegon || 0)}\nAixò sobreescriurà el progrés actual.`)) {
+                            return;
+                        }
+                        
+                        // Carregar dades bàsiques
+                        galetes = dadesJoc.galetes || 0;
+                        galetesPerClic = dadesJoc.galetesPerClic || 1;
+                        produccioPerSegon = dadesJoc.produccioPerSegon || 0;
+                        clicsTotals = dadesJoc.clicsTotals || 0;
+                        
+                        // Carregar nivells de millores
+                        if (dadesJoc.millores) {
+                            dadesJoc.millores.forEach(milloraGuardada => {
+                                const millora = millores.find(m => m.id === milloraGuardada.id);
+                                if (millora) {
+                                    millora.nivell = milloraGuardada.nivell || 0;
+                                }
+                            });
+                        }
+                        
+                        // Recalcular estadístiques a partir de les millores
+                        recalcularEstadistiques();
+                        
+                        actualitzarPantalla();
+                        inicialitzarMillores();
+                        guardarProgres();
+                        
+                        alert('Dades importades correctament!');
+                    } catch (error) {
+                        console.error('Error important dades:', error);
+                        alert('Error important les dades. Assegura\'t que és un fitxer vàlid.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
         
         // Auto-guardar cada 30 segons
