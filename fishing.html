@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Joc de pescar (4 capes)</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --ui:#ffffff; --ui2:#cfe9ff;
+      --card: rgba(255,255,255,.10); --card2: rgba(255,255,255,.16);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1200px 800px at 50% 10%, #162044, var(--bg));
+      color:var(--ui);
+      display:flex; flex-direction:column; min-height:100vh;
+      user-select:none; -webkit-user-select:none;
+    }
+    header{
+      padding:14px 14px 8px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .hud{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .pill{
+      background:var(--card);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:999px;
+      padding:8px 12px;
+      display:flex; gap:8px; align-items:center;
+      backdrop-filter: blur(6px);
+    }
+    .pill b{color:var(--ui2)}
+    .btn{
+      cursor:pointer;
+      background:linear-gradient(180deg, var(--card2), var(--card));
+      border:1px solid rgba(255,255,255,.22);
+      color:var(--ui);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:600;
+    }
+    .btn:active{transform:translateY(1px)}
+    main{flex:1; display:flex; align-items:center; justify-content:center; padding:10px 14px 18px;}
+    .wrap{width:min(980px, 100%);}
+    canvas{
+      width:100%;
+      aspect-ratio: 16 / 9;
+      display:block;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      touch-action:none;
+      background: linear-gradient(180deg, #123a6a 0%, #0b6aa2 35%, #07598a 65%, #063a67 100%);
+    }
+    .help{
+      margin-top:10px;
+      display:flex; gap:10px; flex-wrap:wrap;
+      color:rgba(255,255,255,.78);
+      font-size:14px;
+    }
+    .help span{background:rgba(255,255,255,.08); padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.14)}
+    .touchbar{margin-top:10px; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;}
+    .touchbar .btn{padding:14px 10px; border-radius:16px; font-size:16px;}
+    @media (min-width: 860px){ .touchbar{display:none;} }
+    .overlay{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.55); padding:16px;}
+    .overlay.show{display:flex;}
+    .modal{
+      width:min(520px, 100%);
+      background: rgba(10,16,32,.88);
+      border:1px solid rgba(255,255,255,.20);
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 20px 50px rgba(0,0,0,.6);
+    }
+    .modal h2{margin:0 0 8px}
+    .modal p{margin:8px 0; color:rgba(255,255,255,.78)}
+    .row{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .row .btn{flex:1}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hud">
+      <div class="pill">🎣 <b>Punts:</b> <span id="score">0</span></div>
+      <div class="pill">⏱️ <b>Temps:</b> <span id="time">60</span>s</div>
+      <div class="pill">🔥 <b>Combo:</b> <span id="combo">0</span></div>
+      <div class="pill">⭐ <b>Millor:</b> <span id="best">0</span></div>
+    </div>
+    <div class="hud">
+      <button class="btn" id="btnPause">Pausa</button>
+      <button class="btn" id="btnRestart">Reinicia</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <canvas id="game" width="960" height="540" aria-label="Joc de pescar"></canvas>
+
+      <div class="help">
+        <span>Teclat: ← → per moure</span>
+        <span>Espai / ↓ per baixar l’ham</span>
+        <span>Capes: 🥾 / 🐟 / 🗑️ / 🐠</span>
+      </div>
+
+      <div class="touchbar">
+        <button class="btn" id="touchLeft">⬅️ Esquerra</button>
+        <button class="btn" id="touchHook">🎣 Ham</button>
+        <button class="btn" id="touchRight">➡️ Dreta</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="endTitle">Fi de la partida</h2>
+      <p id="endText"></p>
+      <div class="row">
+        <button class="btn" id="btnPlayAgain">Torna a jugar</button>
+        <button class="btn" id="btnClose">Tanca</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+
+  const $ = (id) => document.getElementById(id);
+  const ui = {
+    score: $('score'),
+    time: $('time'),
+    combo: $('combo'),
+    best: $('best'),
+    overlay: $('overlay'),
+    endTitle: $('endTitle'),
+    endText: $('endText'),
+    btnPause: $('btnPause'),
+    btnRestart: $('btnRestart'),
+    btnPlayAgain: $('btnPlayAgain'),
+    btnClose: $('btnClose'),
+    touchLeft: $('touchLeft'),
+    touchRight: $('touchRight'),
+    touchHook: $('touchHook'),
+  };
+
+  const W = canvas.width, H = canvas.height;
+  const SEA_Y = 120;               // línia d'aigua
+  const BOAT_Y = SEA_Y - 22;
+  const MAX_LINE = H - 80;
+
+  // ===== 4 CAPES =====
+  // Zona d'aigua disponible (de SEA_Y fins a prop del fons)
+  const WATER_TOP = SEA_Y + 20;
+  const WATER_BOTTOM = H - 120;
+  const WATER_H = WATER_BOTTOM - WATER_TOP;
+  const LAYERS = [
+    { id: "boot",  emoji:"🥾", points:-12, r:18 }, // 1a capa
+    { id: "fish",  emoji:"🐟", points:+10, r:16 }, // 2a capa
+    { id: "trash", emoji:"🗑️", points:-18, r:18 }, // 3a capa
+    { id: "gold",  emoji:"🐠", points:+25, r:18 }, // 4a capa
+  ];
+  const LAYER_H = WATER_H / 4;
+
+  function layerRange(i){
+    const top = WATER_TOP + i*LAYER_H;
+    const bottom = top + LAYER_H;
+    return { top, bottom };
+  }
+  function randIn(a,b){ return a + Math.random()*(b-a); }
+
+  // Game state
+  const state = {
+    running: true,
+    paused: false,
+    timeLeft: 60,
+    score: 0,
+    best: Number(localStorage.getItem('fishing_best_4layers') || 0),
+    combo: 0,
+    lineLen: 0,
+    lineSpeed: 520,
+    lowering: false,
+    raising: false,
+    caught: null,
+    objects: [],
+    bubbles: [],
+    spawnT: 0,
+    // spawns per capa (totes alhora, però amb aleatorietat)
+    spawnEvery: 0.9,
+    boatX: W/2,
+    boatV: 0,
+    boatMaxV: 520,
+    boatAccel: 2200,
+    boatFriction: 0.88
+  };
+
+  ui.best.textContent = state.best;
+
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+  // ===== Input =====
+  const keys = { left:false, right:false, hook:false };
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowLeft') keys.left = true;
+    if (e.code === 'ArrowRight') keys.right = true;
+    if (e.code === 'ArrowDown' || e.code === 'Space') { keys.hook = true; e.preventDefault(); }
+    if (e.code === 'KeyP') togglePause();
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'ArrowLeft') keys.left = false;
+    if (e.code === 'ArrowRight') keys.right = false;
+    if (e.code === 'ArrowDown' || e.code === 'Space') keys.hook = false;
+  });
+
+  function bindHold(btn, onDown, onUp){
+    const down = (e) => { e.preventDefault(); onDown(); };
+    const up = (e) => { e.preventDefault(); onUp(); };
+    btn.addEventListener('pointerdown', down);
+    btn.addEventListener('pointerup', up);
+    btn.addEventListener('pointercancel', up);
+    btn.addEventListener('pointerleave', up);
+  }
+  bindHold(ui.touchLeft,  () => keys.left = true,  () => keys.left = false);
+  bindHold(ui.touchRight, () => keys.right = true, () => keys.right = false);
+  bindHold(ui.touchHook,  () => keys.hook = true,  () => keys.hook = false);
+
+  canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); keys.hook = true; });
+  canvas.addEventListener('pointerup',   (e) => { e.preventDefault(); keys.hook = false; });
+  canvas.addEventListener('pointercancel',(e) => { keys.hook = false; });
+
+  ui.btnPause.addEventListener('click', togglePause);
+  ui.btnRestart.addEventListener('click', restart);
+  ui.btnPlayAgain.addEventListener('click', () => { ui.overlay.classList.remove('show'); restart(); });
+  ui.btnClose.addEventListener('click', () => ui.overlay.classList.remove('show'));
+
+  function togglePause(){
+    state.paused = !state.paused;
+    ui.btnPause.textContent = state.paused ? 'Reprèn' : 'Pausa';
+  }
+
+  // ===== Spawning per capa =====
+  // Cada objecte "sabe" a quina capa pertany i només es mou dins la seva franja Y
+  function spawnOneInLayer(layerIndex){
+    const L = LAYERS[layerIndex];
+    const { top, bottom } = layerRange(layerIndex);
+
+    const fromLeft = Math.random() < 0.5;
+    const x = fromLeft ? -30 : W + 30;
+
+    // y aleatòria dins la franja de la capa (amb una mica de marge)
+    const y = randIn(top + 10, bottom - 10);
+
+    // velocitat segons capa (més profund = lleugerament més lent)
+    const base = 95 + Math.random()*90;
+    const depthFactor = 1 - layerIndex*0.07;
+    const sp = base * depthFactor;
+    const vx = fromLeft ? sp : -sp;
+
+    state.objects.push({
+      layerIndex,
+      emoji: L.emoji,
+      r: L.r,
+      points: L.points,
+      x, y,
+      vx,
+      t0: performance.now()/1000,
+      wobble: 0.9 + Math.random()*0.6,
+      bob: 6 + Math.random()*10
+    });
+  }
+
+  function spawnTick(){
+    // A cada tick, fem spawn a capes diferents amb probabilitats lleugerament diferents
+    // (pots ajustar-ho fàcilment)
+    for (let i=0; i<4; i++){
+      const p = [0.55, 0.75, 0.55, 0.45][i]; // freq relativa per capa
+      if (Math.random() < p) spawnOneInLayer(i);
+    }
+  }
+
+  // ===== Bubbles (decoració) =====
+  function spawnBubbles(dt){
+    if (Math.random() < dt * 3.0){
+      const x = Math.random()*W;
+      const y = H + 10;
+      state.bubbles.push({
+        x, y,
+        r: 2 + Math.random()*5,
+        vy: 40 + Math.random()*70,
+        a: 0.25 + Math.random()*0.35
+      });
+    }
+    for (let i=state.bubbles.length-1;i>=0;i--){
+      const b = state.bubbles[i];
+      b.y -= b.vy*dt;
+      b.x += Math.sin(b.y*0.02)*10*dt;
+      if (b.y < SEA_Y+10) state.bubbles.splice(i,1);
+    }
+  }
+
+  // ===== Hook / line =====
+  function hookX(){ return state.boatX; }
+  function hookY(){ return SEA_Y + state.lineLen; }
+
+  function updateHook(dt){
+    if (!state.caught){
+      if (keys.hook && !state.lowering && !state.raising){
+        state.lowering = true;
+        state.raising = false;
+      }
+      if (!keys.hook && state.lowering){
+        state.lowering = false;
+        state.raising = true;
+      }
+    } else {
+      state.lowering = false;
+      state.raising = true;
+    }
+
+    if (state.lowering){
+      state.lineLen = clamp(state.lineLen + state.lineSpeed*dt, 0, MAX_LINE);
+      if (state.lineLen >= MAX_LINE) { state.lowering = false; state.raising = true; }
+    } else if (state.raising){
+      state.lineLen = clamp(state.lineLen - state.lineSpeed*dt, 0, MAX_LINE);
+      if (state.lineLen <= 0){
+        state.raising = false;
+        if (state.caught){
+          applyCatch(state.caught);
+          state.caught = null;
+        }
+      }
+    }
+
+    if (state.caught){
+      state.caught.x = hookX();
+      state.caught.y = hookY() + 18;
+      state.caught.vx = 0;
+    }
+  }
+
+  function checkCatch(){
+    if (state.caught) return;
+    if (state.lineLen < 20) return;
+
+    const hx = hookX();
+    const hy = hookY();
+    const hr = 14;
+
+    for (let i=0; i<state.objects.length; i++){
+      const o = state.objects[i];
+      const dx = o.x - hx, dy = o.y - (hy+18);
+      const d2 = dx*dx + dy*dy;
+      const rr = (o.r + hr);
+      if (d2 <= rr*rr){
+        state.caught = o;
+        state.objects.splice(i,1);
+        state.lowering = false;
+        state.raising = true;
+        return;
+      }
+    }
+  }
+
+  function applyCatch(o){
+    const pts = o.points;
+    if (pts > 0){
+      state.combo += 1;
+      const bonus = Math.min(10, state.combo) * 2;
+      state.score += pts + bonus;
+    } else {
+      state.combo = 0;
+      state.score += pts;
+    }
+    state.score = Math.max(0, state.score);
+
+    if (state.score > state.best){
+      state.best = state.score;
+      localStorage.setItem('fishing_best_4layers', String(state.best));
+      ui.best.textContent = state.best;
+    }
+    ui.score.textContent = state.score;
+    ui.combo.textContent = state.combo;
+  }
+
+  // ===== Boat =====
+  function updateBoat(dt){
+    let ax = 0;
+    if (keys.left) ax -= state.boatAccel;
+    if (keys.right) ax += state.boatAccel;
+
+    state.boatV += ax*dt;
+    state.boatV = clamp(state.boatV, -state.boatMaxV, state.boatMaxV);
+
+    if (!keys.left && !keys.right) state.boatV *= Math.pow(state.boatFriction, dt*60);
+
+    state.boatX += state.boatV*dt;
+    state.boatX = clamp(state.boatX, 70, W-70);
+  }
+
+  // ===== Update objects (respectant capa) =====
+  function updateObjects(dt, nowS){
+    for (let i=state.objects.length-1;i>=0;i--){
+      const o = state.objects[i];
+      o.x += o.vx*dt;
+
+      // wobble vertical suau però CLAMP dins la franja de la capa
+      const { top, bottom } = layerRange(o.layerIndex);
+      const wob = Math.sin((nowS - o.t0) * (1.6*o.wobble)) * o.bob;
+      o.y += wob*dt*0.25;
+      o.y = clamp(o.y, top + 8, bottom - 8);
+
+      if (o.x < -80 || o.x > W+80) state.objects.splice(i,1);
+    }
+  }
+
+  // ===== Drawing =====
+  function drawSea(){
+    // CAPES visibles
+    ctx.save();
+
+    // línia d'aigua
+    ctx.fillStyle = "rgba(255,255,255,.10)";
+    ctx.fillRect(0, SEA_Y-1, W, 2);
+
+    // franges: 4 capes (subtils)
+    for (let i=0;i<4;i++){
+      const { top, bottom } = layerRange(i);
+      const a = 0.08 + i*0.02; // més fosc a mida que baixes
+      ctx.fillStyle = `rgba(255,255,255,${a})`;
+      ctx.fillRect(0, top, W, bottom-top);
+
+      // etiqueta emoji a l'esquerra
+      ctx.globalAlpha = 0.65;
+      ctx.font = "18px system-ui, Apple Color Emoji, Segoe UI Emoji";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(LAYERS[i].emoji, 14, (top+bottom)/2);
+      ctx.globalAlpha = 1;
+
+      // línia separadora
+      if (i<3){
+        ctx.fillStyle = "rgba(255,255,255,.10)";
+        ctx.fillRect(0, bottom-1, W, 1);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function drawBoat(){
+    const x = state.boatX, y = BOAT_Y;
+    ctx.save();
+
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    ctx.beginPath();
+    ctx.roundRect(x-44, y-10, 88, 22, 10);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.beginPath();
+    ctx.roundRect(x-20, y-28, 40, 18, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,.85)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x+6, y-28);
+    ctx.lineTo(x+6, y-54);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.beginPath();
+    ctx.moveTo(x+6, y-54);
+    ctx.lineTo(x+34, y-46);
+    ctx.lineTo(x+6, y-38);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawLine(){
+    const x = hookX();
+    const y0 = SEA_Y - 2;
+    const y1 = SEA_Y + state.lineLen;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,.80)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y0);
+    ctx.lineTo(x, y1);
+    ctx.stroke();
+
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y1+10, 10, Math.PI*0.1, Math.PI*1.65);
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.beginPath();
+    ctx.arc(x, y1+10, 3.5, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawObjects(){
+    ctx.save();
+    ctx.font = "28px system-ui, Apple Color Emoji, Segoe UI Emoji";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    for (const o of state.objects){
+      ctx.globalAlpha = 0.95;
+      ctx.fillText(o.emoji, o.x, o.y);
+    }
+    if (state.caught){
+      ctx.globalAlpha = 1;
+      ctx.fillText(state.caught.emoji, state.caught.x, state.caught.y);
+    }
+    ctx.restore();
+  }
+
+  function drawBubbles(){
+    ctx.save();
+    for (const b of state.bubbles){
+      ctx.globalAlpha = b.a;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+
+    // fons marí suau
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, "rgba(255,255,255,.05)");
+    g.addColorStop(1, "rgba(0,0,0,.25)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    drawSea();
+    drawBubbles();
+    drawObjects();
+    drawLine();
+    drawBoat();
+
+    if (state.paused){
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,.38)";
+      ctx.fillRect(0,0,W,H);
+      ctx.fillStyle = "rgba(255,255,255,.92)";
+      ctx.font = "700 42px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("PAUSA", W/2, H/2 - 10);
+      ctx.font = "16px system-ui";
+      ctx.fillStyle = "rgba(255,255,255,.75)";
+      ctx.fillText("Prem P o el botó per continuar", W/2, H/2 + 26);
+      ctx.restore();
+    }
+  }
+
+  if (!CanvasRenderingContext2D.prototype.roundRect){
+    CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+      r = Math.min(r, w/2, h/2);
+      this.beginPath();
+      this.moveTo(x+r, y);
+      this.arcTo(x+w, y, x+w, y+h, r);
+      this.arcTo(x+w, y+h, x, y+h, r);
+      this.arcTo(x, y+h, x, y, r);
+      this.arcTo(x, y, x+w, y, r);
+      this.closePath();
+      return this;
+    };
+  }
+
+  // ===== Loop =====
+  let last = performance.now();
+  let acc = 0;
+
+  function loop(now){
+    const dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+
+    if (!state.paused && state.running){
+      acc += dt;
+      if (acc >= 1){
+        const dec = Math.floor(acc);
+        acc -= dec;
+        state.timeLeft = Math.max(0, state.timeLeft - dec);
+        ui.time.textContent = state.timeLeft;
+
+        // mica més ràpid al final
+        state.spawnEvery = clamp(0.95 - (60 - state.timeLeft)*0.004, 0.45, 0.95);
+
+        if (state.timeLeft === 0) endGame();
+      }
+
+      state.spawnT += dt;
+      if (state.spawnT >= state.spawnEvery){
+        state.spawnT = 0;
+        spawnTick();
+      }
+
+      const nowS = now/1000;
+      updateBoat(dt);
+      updateHook(dt);
+      checkCatch();
+      updateObjects(dt, nowS);
+      spawnBubbles(dt);
+
+      ui.score.textContent = state.score;
+      ui.combo.textContent = state.combo;
+    }
+
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function endGame(){
+    state.running = false;
+    state.paused = true;
+    ui.btnPause.textContent = 'Reprèn';
+    ui.endTitle.textContent = "Fi de la partida!";
+    ui.endText.textContent = `Has fet ${state.score} punts. Combo final: ${state.combo}. Millor marca: ${state.best}.`;
+    ui.overlay.classList.add('show');
+  }
+
+  function restart(){
+    state.running = true;
+    state.paused = false;
+    ui.btnPause.textContent = 'Pausa';
+    ui.overlay.classList.remove('show');
+
+    state.timeLeft = 60;
+    state.score = 0;
+    state.combo = 0;
+    state.lineLen = 0;
+    state.lowering = false;
+    state.raising = false;
+    state.caught = null;
+    state.objects = [];
+    state.bubbles = [];
+    state.spawnT = 0;
+    state.spawnEvery = 0.9;
+    state.boatX = W/2;
+    state.boatV = 0;
+
+    ui.time.textContent = state.timeLeft;
+    ui.score.textContent = state.score;
+    ui.combo.textContent = state.combo;
+    ui.best.textContent = state.best;
+  }
+
+  restart();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
