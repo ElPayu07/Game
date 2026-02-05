@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA RNG: ALCHEMY & LEGENDS</title>
+    <style>
+        :root {
+            --bg: #0d0d12;
+            --panel: #1a1a24;
+            --accent: #00f2ff;
+            --coin: #ffcc00;
+            --text: #e0e0e0;
+            --rare: #a855f7;
+            --op: #ff0055;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-wrapper {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            width: 98%;
+            max-width: 1400px;
+            height: 95vh;
+        }
+
+        .panel {
+            background: var(--panel);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #2d2d3d;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- Stats --- */
+        .stat-card { margin-bottom: 12px; background: #232331; padding: 12px; border-radius: 12px; }
+        .label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 1.2rem; font-weight: bold; color: var(--coin); }
+        
+        #potion-active-display {
+            margin-top: 10px; padding: 8px; background: rgba(0, 242, 255, 0.1);
+            border: 1px solid var(--accent); border-radius: 8px; display: none;
+            font-size: 0.8rem; color: var(--accent); text-align: center; font-weight: bold;
+        }
+
+        /* --- Tabs --- */
+        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab-btn {
+            flex: 1; padding: 10px; background: #232331; border: none; color: #888;
+            cursor: pointer; border-radius: 8px; font-size: 0.7rem; font-weight: bold;
+        }
+        .tab-btn.active { background: var(--accent); color: #000; }
+
+        .tab-content { display: none; flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+        .tab-content.active { display: block; }
+
+        /* --- Crafting --- */
+        .craft-item {
+            background: #232331; padding: 12px; border-radius: 10px; margin-bottom: 12px;
+            border-left: 4px solid var(--accent); position: relative;
+        }
+        .craft-item.completed { opacity: 0.5; border-left-color: #555; }
+        .craft-item b { display: block; font-size: 0.9rem; margin-bottom: 4px; }
+        .craft-req { font-size: 0.65rem; color: #aaa; margin-bottom: 8px; }
+        
+        .btn-group { display: flex; gap: 5px; }
+        .craft-btn {
+            flex: 2; padding: 8px; background: #3a3a4d; border: 1px solid #444;
+            color: white; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-weight: bold;
+        }
+        .craft-btn:disabled { background: #1a1a24; color: #555; cursor: not-allowed; }
+        
+        .track-btn {
+            flex: 1; padding: 8px; background: #2d2d3d; border: 1px solid #444;
+            color: #888; border-radius: 5px; cursor: pointer; font-size: 0.65rem;
+        }
+        .track-btn.active { background: var(--rare); color: white; border-color: var(--rare); }
+
+        /* --- Shop --- */
+        .shop-btn {
+            width: 100%; padding: 12px; margin-top: 8px; cursor: pointer; 
+            background: #232331; border: 1px solid #3d3d52; color: white; border-radius: 10px;
+        }
+        .shop-btn.op { border-color: var(--op); color: var(--op); font-weight: bold; }
+        .shop-btn:disabled { opacity: 0.5; cursor: default; }
+
+        /* --- Main Area --- */
+        .roll-main { text-align: center; justify-content: space-around; }
+        #aura-name { font-size: 3rem; font-weight: 900; line-height: 1; margin: 15px 0; text-transform: uppercase; }
+        #aura-chance { font-size: 1.1rem; color: #666; }
+
+        .btn-roll {
+            background: linear-gradient(135deg, #7000ff, #00f2ff);
+            border: none; padding: 25px; border-radius: 15px; color: white;
+            font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+
+        .inv-row {
+            display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2d2d3d; font-size: 0.85rem;
+        }
+        .locked-tag { color: var(--rare); font-size: 0.6rem; margin-left: 5px; font-weight: bold; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <div class="panel">
+        <div class="stat-card">
+            <div class="label">Balance</div>
+            <div id="coins" class="value">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Total Multiplier</div>
+            <div id="luck-total" class="value" style="color: var(--accent)">x1.0</div>
+            <div id="potion-active-display">POTION ACTIVE: 00s</div>
+        </div>
+        
+        <div class="label" style="margin-top: 10px;">Permanent Shop</div>
+        <button class="shop-btn" onclick="buyLuck()">
+            Base Luck +0.5<br>
+            <small id="luck-cost" style="color:var(--coin)">Cost: 100</small>
+        </button>
+
+        <button id="op-auto-btn" class="shop-btn op" onclick="buyOPAuto()">
+            OP AUTO-ROLL (0.2s)<br>
+            <small style="color:var(--coin)">Cost: 100,000</small>
+        </button>
+
+        <button id="auto-btn" onclick="toggleAuto()" style="margin-top:auto; padding:15px; cursor:pointer; font-weight:bold; border-radius:12px; border:none; background:#3d3d52; color:white;">AUTO-ROLL: OFF</button>
+    </div>
+
+    <div class="panel roll-main">
+        <div>
+            <div class="label">Discovered</div>
+            <div id="aura-name" style="color: #333;">READY?</div>
+            <div id="aura-chance">Roll to find your first aura</div>
+        </div>
+
+        <button id="roll-btn" class="btn-roll" onclick="roll()">ROLL AURA</button>
+
+        <div>
+            <div class="label">Best Find (Record)</div>
+            <div id="best-aura-display" style="font-weight: bold; font-size: 1.2rem;">-</div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="tabs">
+            <button id="tab-inv" class="tab-btn active" onclick="showTab('inv')">TOP 30</button>
+            <button id="tab-craft" class="tab-btn" onclick="showTab('craft')">ALCHEMY</button>
+        </div>
+
+        <div id="inv-tab" class="tab-content active">
+            <div id="inv-list"></div>
+        </div>
+
+        <div id="craft-tab" class="tab-content"></div>
+    </div>
+</div>
+
+<script>
+    const auraData = [
+        {n: "Dust", r: 2, c: "#8e8e8e"}, {n: "Leaf", r: 5, c: "#4caf50"}, {n: "Dew", r: 12, c: "#81d4fa"},
+        {n: "Stone", r: 25, c: "#9e9e9e"}, {n: "Breeze", r: 50, c: "#e0f7fa"}, {n: "Spark", r: 100, c: "#fff59d"},
+        {n: "Copper", r: 250, c: "#b87333"}, {n: "Iron", r: 500, c: "#ced4da"}, {n: "Petal", r: 800, c: "#f48fb1"},
+        {n: "Tide", r: 1500, c: "#2196f3"}, {n: "Silver", r: 3000, c: "#e0e0e0"}, {n: "Amber", r: 6000, c: "#ffb300"},
+        {n: "Glow", r: 10000, c: "#ccff00"}, {n: "Gold", r: 25000, c: "#ffd700"}, {n: "Jade", r: 50000, c: "#00c853"},
+        {n: "Cobalt", r: 100000, c: "#304ffe"}, {n: "Amethyst", r: 250000, c: "#aa00ff"}, {n: "Ruby", r: 750000, c: "#ff1744"},
+        {n: "Sapphire", r: 2000000, c: "#2979ff"}, {n: "Void", r: 10000000, c: "#1a1a1a"}, {n: "ZENITH", r: 100000000, c: "#00d4ff"}
+    ];
+
+    const craftRecipes = [
+        { id: 'p3', n: 'Lesser Elixir', type: 'potion', mult: 3, dur: 45, req: ['Breeze', 'Spark'], cd: 300 },
+        { id: 'perm_low', n: 'Iron Heart', type: 'perm', boost: 1.5, req: ['Iron', 'Stone'] },
+        { id: 'p5', n: 'Luck Potion', type: 'potion', mult: 5, dur: 20, req: ['Gold', 'Amethyst'], cd: 300 },
+        { id: 'perm_mid', n: 'Ocean Grace', type: 'perm', boost: 3.0, req: ['Tide', 'Silver'] },
+        { id: 'p12', n: 'Golden Draught', type: 'potion', mult: 12, dur: 15, req: ['Gold', 'Amber'], cd: 300 },
+        { id: 'perm_high', n: 'Divine Luck', type: 'perm', boost: 7.5, req: ['Ruby', 'Sapphire'] },
+        { id: 'p50', n: 'Void Essence', type: 'potion', mult: 50, dur: 10, req: ['Void', 'Cobalt'], cd: 300 },
+        { id: 'perm_max', n: 'ZENITH Shard', type: 'perm', boost: 25.0, req: ['ZENITH', 'Jade'] }
+    ];
+
+    let state = {
+        coins: 0,
+        luckLevel: 1,
+        permCraftLuck: 0,
+        inventory: [],
+        auto: false,
+        opAuto: false,
+        potMult: 1,
+        potEnd: 0,
+        completedPerms: [],
+        cooldowns: {},
+        trackedRecipe: null,
+        bestAura: {n: "-", r: 0, c: "#fff"} // Persistent Record
+    };
+
+    function roll() {
+        const baseLuck = 1 + (state.luckLevel - 1) * 0.5 + state.permCraftLuck;
+        const totalLuck = baseLuck * state.potMult;
+        
+        let selected = auraData[0];
+        for (let i = auraData.length - 1; i >= 0; i--) {
+            if (Math.random() < (1 / (auraData[i].r / totalLuck))) {
+                selected = auraData[i];
+                break;
+            }
+        }
+
+        // Update Record if this is rarer than the previous Best Find
+        if (selected.r > state.bestAura.r) {
+            state.bestAura = {...selected};
+        }
+
+        state.coins += Math.floor(Math.log10(selected.r) * 5) + 1;
+        updateInventory(selected);
+        updateUI(selected);
+        save();
+    }
+
+    function updateInventory(aura) {
+        if (!state.inventory.some(a => a.n === aura.n)) {
+            state.inventory.push(aura);
+        }
+        
+        state.inventory.sort((a, b) => {
+            const aNeeded = isTracked(a.n);
+            const bNeeded = isTracked(b.n);
+            if (aNeeded && !bNeeded) return -1;
+            if (!aNeeded && bNeeded) return 1;
+            return b.r - a.r;
+        });
+
+        if (state.inventory.length > 30) state.inventory.pop();
+        renderInventory();
+    }
+
+    function isTracked(auraName) {
+        if (!state.trackedRecipe) return false;
+        const recipe = craftRecipes.find(r => r.id === state.trackedRecipe);
+        return recipe ? recipe.req.includes(auraName) : false;
+    }
+
+    function renderInventory() {
+        const list = document.getElementById('inv-list');
+        list.innerHTML = state.inventory.map(a => `
+            <div class="inv-row">
+                <span>
+                    <span style="color:${a.c}">${a.n}</span>
+                    ${isTracked(a.n) ? '<span class="locked-tag">[TRACKED]</span>' : ''}
+                </span>
+                <span style="color:#555">1/${a.r.toLocaleString()}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderCrafts() {
+        const container = document.getElementById('craft-tab');
+        const now = Date.now();
+        container.innerHTML = craftRecipes.map(r => {
+            const isDone = state.completedPerms.includes(r.id);
+            const onCD = state.cooldowns[r.id] && state.cooldowns[r.id] > now;
+            const cdSec = onCD ? Math.ceil((state.cooldowns[r.id] - now) / 1000) : 0;
+            return `
+                <div class="craft-item ${isDone ? 'completed' : ''}">
+                    <b>${r.n} (${r.type === 'perm' ? '+' + r.boost : 'x' + r.mult})</b>
+                    <p class="craft-req">Needs: ${r.req.join(', ')}</p>
+                    <div class="btn-group">
+                        <button class="craft-btn" onclick="craft('${r.id}')" ${isDone || onCD ? 'disabled' : ''}>
+                            ${isDone ? 'DONE' : (onCD ? 'CD: ' + cdSec + 's' : 'CRAFT')}
+                        </button>
+                        ${!isDone ? `<button class="track-btn ${state.trackedRecipe === r.id ? 'active' : ''}" onclick="toggleTrack('${r.id}')">TRACK</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function craft(id) {
+        const r = craftRecipes.find(rec => rec.id === id);
+        
+        // Check if all required auras are in inventory
+        const hasAll = r.req.every(name => state.inventory.some(a => a.n === name));
+        if (!hasAll) return alert("Missing required materials in Top 30!");
+
+        // CONSUME Auras: Remove the materials from the inventory array
+        r.req.forEach(materialName => {
+            state.inventory = state.inventory.filter(a => a.n !== materialName);
+        });
+
+        if (r.type === 'perm') {
+            state.permCraftLuck += r.boost;
+            state.completedPerms.push(id);
+            state.trackedRecipe = null;
+            alert(`${r.n} Crafted! Materials consumed.`);
+        } else {
+            state.potMult = r.mult;
+            state.potEnd = Date.now() + (r.dur * 1000);
+            state.cooldowns[id] = Date.now() + (r.cd * 1000);
+            document.getElementById('potion-active-display').style.display = 'block';
+            alert(`Potion Active! Materials consumed.`);
+        }
+
+        save();
+        renderInventory();
+        renderCrafts();
+        updateUI();
+    }
+
+    function buyOPAuto() {
+        if (state.coins >= 100000 && !state.opAuto) {
+            state.coins -= 100000;
+            state.opAuto = true;
+            document.getElementById('op-auto-btn').innerText = "OP AUTO-ROLL: BOUGHT";
+            document.getElementById('op-auto-btn').disabled = true;
+            save();
+            updateUI();
+        } else if (state.coins < 100000) {
+            alert("Not enough coins!");
+        }
+    }
+
+    function toggleTrack(id) { state.trackedRecipe = (state.trackedRecipe === id) ? null : id; renderCrafts(); renderInventory(); save(); }
+
+    function updateUI(aura) {
+        if(aura) {
+            document.getElementById('aura-name').innerText = aura.n;
+            document.getElementById('aura-name').style.color = aura.c;
+            document.getElementById('aura-name').style.textShadow = `0 0 40px ${aura.c}`;
+            document.getElementById('aura-chance').innerText = `1 in ${aura.r.toLocaleString()}`;
+        }
+        document.getElementById('coins').innerText = Math.floor(state.coins).toLocaleString();
+        const baseLuck = (1 + (state.luckLevel - 1) * 0.5 + state.permCraftLuck);
+        document.getElementById('luck-total').innerText = `x${(baseLuck * state.potMult).toFixed(1)}`;
+        
+        // Always display the record, not just what's currently in inventory
+        document.getElementById('best-aura-display').innerText = state.bestAura.n;
+        document.getElementById('best-aura-display').style.color = state.bestAura.c;
+
+        if (state.opAuto) {
+            document.getElementById('op-auto-btn').innerText = "OP AUTO-ROLL: BOUGHT";
+            document.getElementById('op-auto-btn').disabled = true;
+        }
+    }
+
+    let tickCounter = 0;
+    setInterval(() => {
+        tickCounter++;
+        const now = Date.now();
+
+        if (state.auto) {
+            if (state.opAuto) {
+                roll(); 
+            } else if (tickCounter % 5 === 0) {
+                roll(); 
+            }
+        }
+
+        if (tickCounter % 5 === 0) {
+            if (state.potEnd > now) {
+                const diff = Math.ceil((state.potEnd - now) / 1000);
+                document.getElementById('potion-active-display').innerText = `POTION ACTIVE: ${diff}s`;
+            } else {
+                state.potMult = 1;
+                document.getElementById('potion-active-display').style.display = 'none';
+            }
+            renderCrafts();
+        }
+    }, 200);
+
+    function buyLuck() {
+        const cost = Math.floor(100 * Math.pow(2.5, state.luckLevel - 1));
+        if (state.coins >= cost) {
+            state.coins -= cost; state.luckLevel++;
+            document.getElementById('luck-cost').innerText = `Cost: ${Math.floor(100 * Math.pow(2.5, state.luckLevel - 1)).toLocaleString()}`;
+            save(); updateUI();
+        }
+    }
+
+    function toggleAuto() {
+        state.auto = !state.auto;
+        const btn = document.getElementById('auto-btn');
+        btn.innerText = `AUTO-ROLL: ${state.auto ? 'ON' : 'OFF'}`;
+        btn.style.background = state.auto ? 'var(--accent)' : '#3d3d52';
+        btn.style.color = state.auto ? '#000' : '#fff';
+    }
+
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tab + '-tab').classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    function save() { localStorage.setItem('aura_rng_v8', JSON.stringify(state)); }
+    function load() {
+        const s = localStorage.getItem('aura_rng_v8');
+        if (s) {
+            state = JSON.parse(s);
+            state.auto = false;
+            renderInventory(); updateUI();
+            document.getElementById('luck-cost').innerText = `Cost: ${Math.floor(100 * Math.pow(2.5, state.luckLevel - 1)).toLocaleString()}`;
+        }
+    }
+
+    window.onload = () => { load(); renderCrafts(); };
+</script>
+
+</body>
+</html>
