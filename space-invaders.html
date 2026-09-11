@@ -3,1040 +3,437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Space Invaders - Cub d'Energia per Disparar</title>
+    <title>Invasors Espacials - Colors per Files</title>
     <style>
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
-        
-        body {
-            font-family: 'Courier New', monospace;
-            background-color: #0a0a2a;
-            color: #0f0;
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #05070d;
+            color: #f8fafc;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
         }
-        
-        h1 {
-            color: #00ffcc;
-            text-shadow: 0 0 10px #00ffcc;
-            margin-bottom: 10px;
-            font-size: 2.5rem;
-            letter-spacing: 3px;
-        }
-        
-        .game-container {
-            position: relative;
-            margin: 20px auto;
-        }
-        
-        #gameCanvas {
-            background-color: #000;
-            border: 2px solid #00ffcc;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
-            display: block;
-        }
-        
-        .info-panel {
-            display: flex;
-            justify-content: space-between;
-            width: 800px;
-            margin-bottom: 15px;
-            background-color: rgba(0, 20, 40, 0.8);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #00ffcc;
-        }
-        
-        .score, .lives, .high-score {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        
-        .power-up-indicator {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        
-        .shield-status {
-            color: #0099ff;
-            margin-bottom: 5px;
-        }
-        
-        .power-shot-status {
-            color: #ffcc00;
-        }
-        
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-            background-color: rgba(0, 20, 40, 0.8);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #00ffcc;
-            width: 800px;
-        }
-        
-        .controls h3 {
-            color: #00ffcc;
-            margin-bottom: 10px;
-        }
-        
-        .controls p {
-            margin: 5px 0;
-            text-align: center;
-        }
-        
-        .buttons {
-            display: flex;
-            gap: 20px;
-            margin-top: 15px;
-        }
-        
-        button {
-            background-color: #0a0a2a;
-            color: #0f0;
-            border: 2px solid #00ffcc;
-            padding: 10px 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-        
-        button:hover {
-            background-color: #00ffcc;
-            color: #000;
-            box-shadow: 0 0 15px #00ffcc;
-        }
-        
-        .game-over {
+
+        .hud {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            color: #ff0066;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            border: 3px solid #ff0066;
-            display: none;
-            z-index: 10;
-            width: 400px;
-        }
-        
-        .game-over h2 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            text-shadow: 0 0 10px #ff0066;
-        }
-        
-        .game-over p {
-            font-size: 1.3rem;
-            margin: 10px 0;
-        }
-        
-        .instructions {
-            margin-top: 20px;
-            background-color: rgba(0, 20, 40, 0.8);
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #00ffcc;
-            width: 800px;
-        }
-        
-        .instructions h3 {
-            color: #00ffcc;
-            margin-bottom: 10px;
-        }
-        
-        .instructions ul {
-            list-style-position: inside;
-            margin-left: 10px;
-        }
-        
-        .instructions li {
-            margin: 8px 0;
-            line-height: 1.4;
-        }
-        
-        .keys {
+            top: 0;
+            left: 0;
+            width: 100%;
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 10px;
-        }
-        
-        .key {
-            background-color: #0a0a2a;
-            border: 1px solid #00ffcc;
-            padding: 5px 10px;
-            border-radius: 5px;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(6px);
+            padding: 12px 20px;
+            font-size: 1.1em;
             font-weight: bold;
-            min-width: 40px;
-            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        
-        .power-up-info {
-            color: #0099ff;
-            margin-top: 10px;
-            font-weight: bold;
-            text-align: center;
+
+        .hud div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        .energy-cube-health {
-            color: #ff9900;
-            font-size: 1rem;
-            margin-top: 5px;
+
+        .hud span {
+            color: #38bdf8;
         }
-        
-        @media (max-width: 850px) {
-            #gameCanvas, .info-panel, .controls, .instructions {
-                width: 95vw;
-                max-width: 95vw;
-            }
-            
-            #gameCanvas {
-                width: 95vw;
-                height: auto;
-                max-height: 70vh;
-            }
-            
-            h1 {
-                font-size: 1.8rem;
-            }
+
+        canvas {
+            background-color: #020617;
+            max-width: 100vw;
+            max-height: calc(100vh - 60px);
+            width: auto;
+            height: auto;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .instruccions-flotants {
+            position: absolute;
+            bottom: 8px;
+            font-size: 0.8em;
+            color: #64748b;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 6px 16px;
+            border-radius: 20px;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
-    <h1>SPACE INVADERS - CUB DISPARABLE</h1>
-    
-    <div class="info-panel">
-        <div class="score">Puntuació: <span id="score">0</span></div>
-        <div class="lives">Vides: <span id="lives">3</span></div>
-        <div class="power-up-indicator">
-            <div class="shield-status" id="shieldStatus">Escut: INACTIU</div>
-            <div class="power-shot-status" id="powerShotStatus">Tret Potent: NO</div>
-            <div class="energy-cube-health" id="cubeHealth"></div>
-        </div>
-        <div class="high-score">Millor Puntuació: <span id="high-score">0</span></div>
+
+    <div class="hud">
+        <div>Punts: <span id="txt-punts">0</span></div>
+        <div>Vides: <span id="txt-vides">❤️ ❤️ ❤️</span></div>
+        <div>Rècord: <span id="txt-record">0</span></div>
     </div>
-    
-    <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="500"></canvas>
-        
-        <div class="game-over" id="gameOverScreen">
-            <h2>GAME OVER</h2>
-            <p>La teva puntuació: <span id="final-score">0</span></p>
-            <p>Millor puntuació: <span id="final-high-score">0</span></p>
-            <button id="restartButton">Tornar a Jugar</button>
-        </div>
-    </div>
-    
-    <div class="controls">
-        <h3>Controls</h3>
-        <div class="keys">
-            <div class="key">←</div>
-            <div class="key">→</div>
-            <div class="key">SPACE</div>
-        </div>
-        <p>Mou amb les fletxes i dispara amb la tecla ESPAI</p>
-        
-        <div class="power-up-info">
-            <p>💥 DISPARA al cub blau per activar l'escut i trets potents durant 7 segons!</p>
-            <p>El cub té 3 vides, necessites disparar-li 3 vegades per activar-lo</p>
-        </div>
-        
-        <div class="buttons">
-            <button id="startButton">Començar Joc</button>
-            <button id="pauseButton">Pausar/Continuar</button>
-            <button id="resetScoreButton">Restablir Millor Puntuació</button>
-        </div>
-    </div>
-    
-    <div class="instructions">
-        <h3>Com Jugar</h3>
-        <ul>
-            <li>Destrueix tots els invasors aliens per guanyar</li>
-            <li><strong>DISPARA al cub blau d'energia</strong> per obtenir:</li>
-            <ul>
-                <li>Escut protector que et defensa dels trets enemics</li>
-                <li>Trets 2x més grans i 1.5x més ràpids durant 7 segons</li>
-            </ul>
-            <li>El cub d'energia té 3 vides, necessites encertar-lo 3 vegades</li>
-            <li>Quan el cub perdi totes les vides, es converteix en power-up</li>
-            <li>El power-up dura 7 segons o fins que l'escut rep un impacte</li>
-            <li>Cada 25-30 segons apareix un nou cub d'energia</li>
-            <li>Evita que els invasors arribin al final de la pantalla</li>
-            <li>Tens 3 vides al començament</li>
-            <li>Cada invader destruït val 10 punts</li>
-            <li>La millor puntuació es guarda automàticament</li>
-        </ul>
+
+    <canvas id="canvas" width="900" height="650"></canvas>
+
+    <div class="instruccions-flotants">
+        Mou-te amb <b>Fletxes / A-D</b> | Dispara amb <b>Espai</b> | Destrueix el cub blau (3 vides) per aconseguir Escut i Potència!
     </div>
 
     <script>
-        // Elements del DOM
-        const canvas = document.getElementById('gameCanvas');
+        const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score');
-        const livesElement = document.getElementById('lives');
-        const highScoreElement = document.getElementById('high-score');
-        const shieldStatusElement = document.getElementById('shieldStatus');
-        const powerShotStatusElement = document.getElementById('powerShotStatus');
-        const cubeHealthElement = document.getElementById('cubeHealth');
-        const finalScoreElement = document.getElementById('final-score');
-        const finalHighScoreElement = document.getElementById('final-high-score');
-        const gameOverScreen = document.getElementById('gameOverScreen');
-        const startButton = document.getElementById('startButton');
-        const pauseButton = document.getElementById('pauseButton');
-        const restartButton = document.getElementById('restartButton');
-        const resetScoreButton = document.getElementById('resetScoreButton');
-        
-        // Variables del joc
-        let score = 0;
-        let lives = 3;
-        let highScore = localStorage.getItem('spaceInvadersHighScore') || 0;
-        let gameOver = false;
-        let gameStarted = false;
-        let gamePaused = false;
-        let animationId;
-        
-        // Variables del power-up d'energia
-        let energyCube = null;
-        let shieldActive = false;
-        let powerShotActive = false;
-        let powerUpEndTime = 0;
-        let powerUpDuration = 7000; // 7 segons en mil·lisegons
-        let lastPowerUpTime = 0;
-        let powerUpIntervalMin = 25000; // 25 segons
-        let powerUpIntervalMax = 30000; // 30 segons
-        let cubeHealth = 0;
-        
-        // Inicialitzar millor puntuació
-        highScoreElement.textContent = highScore;
-        
-        // Jugador
-        const player = {
-            x: canvas.width / 2 - 25,
+
+        const txtPunts = document.getElementById('txt-punts');
+        const txtVides = document.getElementById('txt-vides');
+        const txtRecord = document.getElementById('txt-record');
+
+        let punts = 0;
+        let vides = 3;
+        let record = localStorage.getItem('espai_record_full_files') || 0;
+        txtRecord.innerText = record;
+
+        let jocActiu = true;
+        let missatgePantalla = "Prem ESPAI per Començar";
+
+        const tecles = {};
+        window.addEventListener('keydown', e => {
+            if (e.code === 'Space') {
+                if (!jocActiu) reiniciarJoc();
+                else disparar();
+                e.preventDefault();
+            }
+            tecles[e.code] = true;
+        });
+        window.addEventListener('keyup', e => tecles[e.code] = false);
+
+        const jugador = {
+            x: canvas.width / 2 - 30,
             y: canvas.height - 50,
-            width: 50,
-            height: 30,
-            speed: 7,
-            color: '#00ffcc'
+            amplada: 60,
+            alcada: 24,
+            velocitat: 6
         };
-        
-        // Projectils del jugador
-        const playerBullets = [];
-        const normalBulletSpeed = 8;
-        const normalBulletWidth = 4;
-        const normalBulletHeight = 10;
-        
-        // Valors dels trets potents (quan es té el power-up)
-        const powerBulletSpeed = normalBulletSpeed * 1.5; // 1.5x més ràpid
-        const powerBulletWidth = normalBulletWidth * 2; // 2x més gran
-        const powerBulletHeight = normalBulletHeight * 2; // 2x més gran
-        
-        // Variables actuals dels trets (canvien segons si tenim power-up o no)
-        let currentBulletSpeed = normalBulletSpeed;
-        let currentBulletWidth = normalBulletWidth;
-        let currentBulletHeight = normalBulletHeight;
-        
-        // Invasors
-        const invaders = [];
-        const invaderRows = 5;
-        const invaderCols = 10;
-        const invaderWidth = 40;
-        const invaderHeight = 30;
-        const invaderPadding = 15;
-        let invaderDirection = 1;
-        let invaderSpeed = 1;
-        let lastInvaderMoveTime = 0;
-        const invaderMoveInterval = 500; // ms
-        
-        // Projectils dels invasors
-        const invaderBullets = [];
-        const invaderBulletSpeed = 5;
-        let lastInvaderShotTime = 0;
-        const invaderShotInterval = 1000; // ms
-        
-        // Tecles premudes
-        const keys = {
-            ArrowLeft: false,
-            ArrowRight: false,
-            ' ': false // Espai
-        };
-        
-        // Inicialitzar invasors
-        function initializeInvaders() {
-            invaders.length = 0;
-            const startX = (canvas.width - (invaderCols * (invaderWidth + invaderPadding))) / 2;
-            const startY = 50;
-            
-            for (let row = 0; row < invaderRows; row++) {
-                for (let col = 0; col < invaderCols; col++) {
-                    invaders.push({
-                        x: startX + col * (invaderWidth + invaderPadding),
-                        y: startY + row * (invaderHeight + invaderPadding),
-                        width: invaderWidth,
-                        height: invaderHeight,
-                        color: row === 0 ? '#ff0066' : row < 3 ? '#ff9900' : '#00ff66',
-                        alive: true
+
+        let bales = [];
+        let balesEnreres = [];
+        let invasors = [];
+        let direccioInvasors = 1;
+
+        let cubEnergia = null;
+        let temporitzadorCub = 0;
+        let tempsProximCub = recapturarTempsCub();
+
+        let powerUpActiu = false;
+        let teEscut = false;
+        let tempsPowerUpFi = 0;
+
+        function recapturarTempsCub() {
+            return Math.floor(Math.random() * 300) + 1500;
+        }
+
+        function reiniciarJoc() {
+            punts = 0;
+            vides = 3;
+            jocActiu = true;
+            bales = [];
+            balesEnreres = [];
+            powerUpActiu = false;
+            teEscut = false;
+            temporitzadorCub = 0;
+            tempsProximCub = recapturarTempsCub();
+            crearInvasors();
+            actualitzarUI();
+        }
+
+        function crearInvasors() {
+            invasors = [];
+            const files = 5; // 5 files en total
+            const columnes = 9;
+            const espaiX = 80;
+            const iniciX = (canvas.width - (columnes * espaiX)) / 2;
+
+            for (let f = 0; f < files; f++) {
+                // Definir color segons la distància al jugador (f = 4 i f = 3 són les més properes)
+                let colorInv = '#ef4444'; // Vermella per defecte (més llunyana, f = 0)
+                if (f === 1 || f === 2) {
+                    colorInv = '#f97316'; // Taronges (files intermèdies)
+                } else if (f === 3 || f === 4) {
+                    colorInv = '#22c55e'; // Verdes (dues files més properes al jugador)
+                }
+
+                for (let c = 0; c < columnes; c++) {
+                    invasors.push({
+                        x: iniciX + c * espaiX,
+                        y: 60 + f * 45,
+                        amplada: 45,
+                        alcada: 28,
+                        viu: true,
+                        color: colorInv
                     });
                 }
             }
         }
-        
-        // Crear un cub d'energia
-        function createEnergyCube() {
-            const cubeSize = 30;
-            energyCube = {
-                x: Math.random() * (canvas.width - cubeSize),
-                y: Math.random() * (canvas.height / 3) + 50, // A la part superior de la pantalla
-                width: cubeSize,
-                height: cubeSize,
-                color: '#0099ff',
-                active: true,
-                rotation: 0,
-                maxHealth: 3,
-                health: 3,
-                hitCooldown: 0 // Cooldown per evitar múltiples impactes amb un sol tret
-            };
-            cubeHealth = energyCube.health;
-            lastPowerUpTime = Date.now();
-            updateCubeHealthDisplay();
-        }
-        
-        // Actualitzar visualització de la vida del cub
-        function updateCubeHealthDisplay() {
-            if (energyCube && energyCube.active) {
-                cubeHealthElement.textContent = `Cub: ${energyCube.health}/3 vides`;
-                cubeHealthElement.style.display = 'block';
-            } else {
-                cubeHealthElement.style.display = 'none';
-            }
-        }
-        
-        // Dibuixar cub d'energia
-        function drawEnergyCube() {
-            if (!energyCube || !energyCube.active) return;
+
+        function disparar() {
+            if (!jocActiu) return;
+            let midaBala = powerUpActiu ? 10 : 5;
+            let velBala = powerUpActiu ? 11 : 7.5;
             
-            ctx.save();
-            ctx.translate(energyCube.x + energyCube.width/2, energyCube.y + energyCube.height/2);
-            ctx.rotate(energyCube.rotation);
-            
-            // Cub blau amb efecte brillant
-            ctx.fillStyle = energyCube.color;
-            ctx.fillRect(-energyCube.width/2, -energyCube.height/2, energyCube.width, energyCube.height);
-            
-            // Detalls del cub
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-energyCube.width/2, -energyCube.height/2, energyCube.width, energyCube.height);
-            
-            // Efecte de brillantor interior
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.fillRect(-energyCube.width/4, -energyCube.height/4, energyCube.width/2, energyCube.height/2);
-            
-            // Símbol d'energia al centre
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('⚡', 0, 0);
-            
-            // Mostrar vides del cub
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText(`${energyCube.health}`, 0, -energyCube.height/2 - 10);
-            
-            ctx.restore();
-            
-            // Animar rotació
-            energyCube.rotation += 0.05;
-            
-            // Reduir cooldown d'impacte
-            if (energyCube.hitCooldown > 0) {
-                energyCube.hitCooldown--;
-            }
-        }
-        
-        // Dibuixar jugador amb escut (si està actiu)
-        function drawPlayer() {
-            // Dibuixar escut si està actiu
-            if (shieldActive) {
-                ctx.beginPath();
-                ctx.arc(
-                    player.x + player.width/2,
-                    player.y + player.height/2,
-                    Math.max(player.width, player.height)/2 + 10,
-                    0,
-                    Math.PI * 2
-                );
-                ctx.strokeStyle = '#0099ff';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-                
-                // Efecte de brillantor de l'escut
-                ctx.beginPath();
-                ctx.arc(
-                    player.x + player.width/2,
-                    player.y + player.height/2,
-                    Math.max(player.width, player.height)/2 + 10,
-                    0,
-                    Math.PI * 2
-                );
-                ctx.strokeStyle = 'rgba(0, 153, 255, 0.3)';
-                ctx.lineWidth = 6;
-                ctx.stroke();
-            }
-            
-            // Cos principal del jugador
-            ctx.fillStyle = powerShotActive ? '#ffcc00' : player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-            
-            // Canó (més gran si tenim power-up)
-            const cannonWidth = powerShotActive ? 15 : 10;
-            const cannonHeight = powerShotActive ? 15 : 10;
-            ctx.fillRect(
-                player.x + player.width/2 - cannonWidth/2,
-                player.y - cannonHeight,
-                cannonWidth,
-                cannonHeight
-            );
-        }
-        
-        // Dibuixar projectils
-        function drawBullets() {
-            // Projectils del jugador
-            ctx.fillStyle = powerShotActive ? '#ffcc00' : '#00ffcc';
-            for (let bullet of playerBullets) {
-                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-                
-                // Efecte especial per als trets potents
-                if (powerShotActive) {
-                    ctx.strokeStyle = '#ff9900';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(bullet.x, bullet.y, bullet.width, bullet.height);
-                }
-            }
-            
-            // Projectils dels invasors
-            ctx.fillStyle = '#ff0066';
-            for (let bullet of invaderBullets) {
-                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-            }
-        }
-        
-        // Dibuixar invasors
-        function drawInvaders() {
-            for (let invader of invaders) {
-                if (invader.alive) {
-                    ctx.fillStyle = invader.color;
-                    ctx.fillRect(invader.x, invader.y, invader.width, invader.height);
-                    
-                    // Detalls de l'invader
-                    ctx.fillStyle = '#000';
-                    // Ulls
-                    ctx.fillRect(invader.x + 8, invader.y + 8, 6, 6);
-                    ctx.fillRect(invader.x + invader.width - 14, invader.y + 8, 6, 6);
-                }
-            }
-        }
-        
-        // Moure jugador
-        function movePlayer() {
-            if (keys.ArrowLeft && player.x > 0) {
-                player.x -= player.speed;
-            }
-            if (keys.ArrowRight && player.x + player.width < canvas.width) {
-                player.x += player.speed;
-            }
-        }
-        
-        // Disparar projectils del jugador
-        function shootPlayerBullet() {
-            if (keys[' ']) {
-                playerBullets.push({
-                    x: player.x + player.width/2 - currentBulletWidth/2,
-                    y: player.y - currentBulletHeight,
-                    width: currentBulletWidth,
-                    height: currentBulletHeight
-                });
-                keys[' '] = false; // Evitar trets continus
-            }
-        }
-        
-        // Moure projectils
-        function moveBullets() {
-            // Moure projectils del jugador
-            for (let i = playerBullets.length - 1; i >= 0; i--) {
-                playerBullets[i].y -= currentBulletSpeed;
-                
-                // Eliminar projectils que surten de la pantalla
-                if (playerBullets[i].y + playerBullets[i].height < 0) {
-                    playerBullets.splice(i, 1);
-                }
-            }
-            
-            // Moure projectils dels invasors
-            for (let i = invaderBullets.length - 1; i >= 0; i--) {
-                invaderBullets[i].y += invaderBulletSpeed;
-                
-                // Eliminar projectils que surten de la pantalla
-                if (invaderBullets[i].y > canvas.height) {
-                    invaderBullets.splice(i, 1);
-                }
-            }
-        }
-        
-        // Moure invasors
-        function moveInvaders(currentTime) {
-            if (currentTime - lastInvaderMoveTime > invaderMoveInterval) {
-                lastInvaderMoveTime = currentTime;
-                
-                let moveDownThisTurn = false;
-                
-                // Comprovar si algun invader arriba als límits
-                for (let invader of invaders) {
-                    if (!invader.alive) continue;
-                    
-                    if (invader.x + invader.width >= canvas.width && invaderDirection === 1) {
-                        moveDownThisTurn = true;
-                        break;
-                    }
-                    if (invader.x <= 0 && invaderDirection === -1) {
-                        moveDownThisTurn = true;
-                        break;
-                    }
-                }
-                
-                if (moveDownThisTurn) {
-                    // Baixar i canviar direcció
-                    invaderDirection *= -1;
-                    for (let invader of invaders) {
-                        if (invader.alive) {
-                            invader.y += 20;
-                        }
-                    }
-                } else {
-                    // Moure en la direcció actual
-                    for (let invader of invaders) {
-                        if (invader.alive) {
-                            invader.x += invaderSpeed * invaderDirection;
-                        }
-                    }
-                }
-                
-                // Disparar dels invasors (aleatori)
-                if (currentTime - lastInvaderShotTime > invaderShotInterval) {
-                    lastInvaderShotTime = currentTime;
-                    shootInvaderBullet();
-                }
-            }
-        }
-        
-        // Disparar dels invasors
-        function shootInvaderBullet() {
-            // Seleccionar un invader aleatori viu
-            const aliveInvaders = invaders.filter(inv => inv.alive);
-            if (aliveInvaders.length === 0) return;
-            
-            const randomInvader = aliveInvaders[Math.floor(Math.random() * aliveInvaders.length)];
-            
-            invaderBullets.push({
-                x: randomInvader.x + randomInvader.width/2 - normalBulletWidth/2,
-                y: randomInvader.y + randomInvader.height,
-                width: normalBulletWidth,
-                height: normalBulletHeight
+            bales.push({
+                x: jugador.x + jugador.amplada / 2 - midaBala / 2,
+                y: jugador.y,
+                radi: midaBala,
+                vel: velBala
             });
         }
-        
-        // Gestionar power-ups
-        function managePowerUps() {
-            const currentTime = Date.now();
-            
-            // Crear nou cub d'energia cada 25-30 segons
-            if (!energyCube || !energyCube.active) {
-                if (currentTime - lastPowerUpTime > powerUpIntervalMin) {
-                    // Crear cub amb probabilitat creixent amb el temps
-                    const timeSinceLastPowerUp = currentTime - lastPowerUpTime;
-                    const probability = Math.min((timeSinceLastPowerUp - powerUpIntervalMin) / (powerUpIntervalMax - powerUpIntervalMin), 1);
+
+        function actualitzarUI() {
+            txtPunts.innerText = punts;
+            let cors = "";
+            for (let i = 0; i < vides; i++) cors += "❤️ ";
+            txtVides.innerText = cors.trim();
+        }
+
+        function actualitzar() {
+            if (!jocActiu) return;
+
+            if ((tecles['ArrowLeft'] || tecles['KeyA']) && jugador.x > 15) {
+                jugador.x -= jugador.velocitat;
+            }
+            if ((tecles['ArrowRight'] || tecles['KeyD']) && jugador.x < canvas.width - jugador.amplada - 15) {
+                jugador.x += jugador.velocitat;
+            }
+
+            if (powerUpActiu && Date.now() > tempsPowerUpFi) {
+                powerUpActiu = false;
+                teEscut = false;
+            }
+
+            if (!cubEnergia) {
+                temporitzadorCub++;
+                if (temporitzadorCub >= tempsProximCub) {
+                    cubEnergia = {
+                        x: Math.random() * (canvas.width - 60),
+                        y: 50,
+                        amplada: 45,
+                        alcada: 45,
+                        vides: 3,
+                        velY: 1.2
+                    };
+                    temporitzadorCub = 0;
+                    tempsProximCub = recapturarTempsCub();
+                }
+            } else {
+                cubEnergia.y += cubEnergia.velY;
+                if (cubEnergia.y > 180 || cubEnergia.y < 40) cubEnergia.velY *= -1;
+            }
+
+            for (let i = bales.length - 1; i >= 0; i--) {
+                bales[i].y -= bales[i].vel;
+
+                if (cubEnergia && 
+                    bales[i].x > cubEnergia.x && bales[i].x < cubEnergia.x + cubEnergia.amplada &&
+                    bales[i].y > cubEnergia.y && bales[i].y < cubEnergia.y + cubEnergia.alcada) {
                     
-                    if (Math.random() < probability) {
-                        createEnergyCube();
+                    cubEnergia.vides--;
+                    bales.splice(i, 1);
+
+                    if (cubEnergia.vides <= 0) {
+                        powerUpActiu = true;
+                        teEscut = true;
+                        tempsPowerUpFi = Date.now() + 7000;
+                        cubEnergia = null;
                     }
+                    continue;
                 }
-            }
-            
-            // Comprovar si el power-up ha expirat
-            if (shieldActive && currentTime > powerUpEndTime) {
-                deactivatePowerUp();
-            }
-        }
-        
-        // Activar power-up
-        function activatePowerUp() {
-            shieldActive = true;
-            powerShotActive = true;
-            powerUpEndTime = Date.now() + powerUpDuration;
-            
-            // Canviar mida i velocitat dels trets
-            currentBulletSpeed = powerBulletSpeed;
-            currentBulletWidth = powerBulletWidth;
-            currentBulletHeight = powerBulletHeight;
-            
-            // Actualitzar indicadors
-            shieldStatusElement.textContent = "Escut: ACTIU (7s)";
-            shieldStatusElement.style.color = "#00ff00";
-            powerShotStatusElement.textContent = "Tret Potent: SÍ";
-            powerShotStatusElement.style.color = "#ffcc00";
-            
-            // Mostrar missatge de power-up activat
-            showPowerUpMessage("POWER-UP ACTIVAT!");
-        }
-        
-        // Desactivar power-up
-        function deactivatePowerUp() {
-            shieldActive = false;
-            powerShotActive = false;
-            
-            // Restaurar mida i velocitat dels trets
-            currentBulletSpeed = normalBulletSpeed;
-            currentBulletWidth = normalBulletWidth;
-            currentBulletHeight = normalBulletHeight;
-            
-            // Actualitzar indicadors
-            shieldStatusElement.textContent = "Escut: INACTIU";
-            shieldStatusElement.style.color = "#0099ff";
-            powerShotStatusElement.textContent = "Tret Potent: NO";
-            powerShotStatusElement.style.color = "#ffcc00";
-        }
-        
-        // Mostrar missatge de power-up
-        function showPowerUpMessage(message) {
-            // Crear element temporal per mostrar el missatge
-            const messageElement = document.createElement('div');
-            messageElement.textContent = message;
-            messageElement.style.position = 'absolute';
-            messageElement.style.top = '50%';
-            messageElement.style.left = '50%';
-            messageElement.style.transform = 'translate(-50%, -50%)';
-            messageElement.style.color = '#ffcc00';
-            messageElement.style.fontSize = '30px';
-            messageElement.style.fontWeight = 'bold';
-            messageElement.style.textShadow = '0 0 10px #ffcc00';
-            messageElement.style.zIndex = '100';
-            messageElement.style.pointerEvents = 'none';
-            
-            document.querySelector('.game-container').appendChild(messageElement);
-            
-            // Eliminar el missatge després de 2 segons
-            setTimeout(() => {
-                if (messageElement.parentNode) {
-                    messageElement.parentNode.removeChild(messageElement);
-                }
-            }, 2000);
-        }
-        
-        // Detectar col·lisions
-        function detectCollisions() {
-            // Col·lisions entre projectils del jugador i invasors
-            for (let i = playerBullets.length - 1; i >= 0; i--) {
-                const bullet = playerBullets[i];
-                
-                // Col·lisió amb invasors
-                for (let j = invaders.length - 1; j >= 0; j--) {
-                    const invader = invaders[j];
-                    
-                    if (invader.alive &&
-                        bullet.x < invader.x + invader.width &&
-                        bullet.x + bullet.width > invader.x &&
-                        bullet.y < invader.y + invader.height &&
-                        bullet.y + bullet.height > invader.y) {
+
+                let eliminatBala = false;
+                for (let j = 0; j < invasors.length; j++) {
+                    let inv = invasors[j];
+                    if (inv.viu &&
+                        bales[i].x > inv.x && bales[i].x < inv.x + inv.amplada &&
+                        bales[i].y > inv.y && bales[i].y < inv.y + inv.alcada) {
                         
-                        // Col·lisió detectada
-                        invader.alive = false;
-                        playerBullets.splice(i, 1);
-                        score += 10;
-                        scoreElement.textContent = score;
-                        
-                        // Actualitzar millor puntuació si s'escau
-                        if (score > highScore) {
-                            highScore = score;
-                            highScoreElement.textContent = highScore;
-                            localStorage.setItem('spaceInvadersHighScore', highScore);
-                        }
-                        
+                        inv.viu = false;
+                        punts += 10;
+                        actualitzarUI();
+                        eliminatBala = true;
                         break;
                     }
                 }
-                
-                // Col·lisió amb cub d'energia (si encara no hem comprovat aquest tret)
-                if (energyCube && energyCube.active && energyCube.hitCooldown <= 0) {
-                    if (bullet.x < energyCube.x + energyCube.width &&
-                        bullet.x + bullet.width > energyCube.x &&
-                        bullet.y < energyCube.y + energyCube.height &&
-                        bullet.y + bullet.height > energyCube.y) {
-                        
-                        // Impacte al cub d'energia
-                        playerBullets.splice(i, 1);
-                        energyCube.health--;
-                        energyCube.hitCooldown = 5; // Cooldown per evitar múltiples impactes
-                        
-                        // Canviar color del cub segons la vida que li queda
-                        if (energyCube.health === 2) {
-                            energyCube.color = '#66aaff';
-                        } else if (energyCube.health === 1) {
-                            energyCube.color = '#aaccff';
-                        }
-                        
-                        updateCubeHealthDisplay();
-                        
-                        // Si el cub perd totes les vides, activar power-up
-                        if (energyCube.health <= 0) {
-                            activatePowerUp();
-                            energyCube.active = false;
-                            cubeHealthElement.style.display = 'none';
-                        }
-                        
-                        break;
-                    }
+
+                if (eliminatBala || bales[i].y < 0) {
+                    bales.splice(i, 1);
                 }
             }
-            
-            // Col·lisions entre projectils dels invasors i el jugador
-            for (let i = invaderBullets.length - 1; i >= 0; i--) {
-                const bullet = invaderBullets[i];
-                
-                if (bullet.x < player.x + player.width &&
-                    bullet.x + bullet.width > player.x &&
-                    bullet.y < player.y + player.height &&
-                    bullet.y + bullet.height > player.y) {
+
+            let tocarVora = false;
+            let viusComptador = 0;
+            for (let inv of invasors) {
+                if (!inv.viu) continue;
+                viusComptador++;
+                inv.x += direccioInvasors * 1.3;
+
+                if (inv.x <= 20 || inv.x >= canvas.width - inv.amplada - 20) {
+                    tocarVora = true;
+                }
+
+                if (inv.y + inv.alcada >= jugador.y) {
+                    jocActiu = false;
+                    missatgePantalla = "Els invasors han arribat al final! Game Over";
+                }
+            }
+
+            if (viusComptador === 0) {
+                jocActiu = false;
+                missatgePantalla = "🏆 Victòria! Has destruït tots els invasors!";
+            }
+
+            if (tocarVora) {
+                direccioInvasors *= -1;
+                for (let inv of invasors) {
+                    inv.y += 20;
+                }
+            }
+
+            if (Math.random() < 0.03 && invasors.filter(i => i.viu).length > 0) {
+                let vius = invasors.filter(i => i.viu);
+                let tirador = vius[Math.floor(Math.random() * vius.length)];
+                balesEnreres.push({
+                    x: tirador.x + tirador.amplada / 2,
+                    y: tirador.y + tirador.alcada,
+                    radi: 5,
+                    vel: 4.5
+                });
+            }
+
+            for (let i = balesEnreres.length - 1; i >= 0; i--) {
+                balesEnreres[i].y += balesEnreres[i].vel;
+
+                let b = balesEnreres[i];
+                if (b.x > jugador.x && b.x < jugador.x + jugador.amplada &&
+                    b.y > jugador.y && b.y < jugador.y + jugador.alcada) {
                     
-                    // Si tenim escut actiu, bloquegem el tret i desactivem l'escut
-                    if (shieldActive) {
-                        invaderBullets.splice(i, 1);
-                        deactivatePowerUp();
-                        showPowerUpMessage("ESCUT DESTRUÏT!");
+                    balesEnreres.splice(i, 1);
+
+                    if (teEscut) {
+                        teEscut = false;
+                        powerUpActiu = false;
                     } else {
-                        // Col·lisió detectada sense escut
-                        invaderBullets.splice(i, 1);
-                        lives--;
-                        livesElement.textContent = lives;
-                        
-                        if (lives <= 0) {
-                            endGame();
+                        vides--;
+                        actualitzarUI();
+                        if (vides <= 0) {
+                            jocActiu = false;
+                            missatgePantalla = "Game Over - T'has quedat sense vides";
                         }
                     }
+                    continue;
+                }
+
+                if (b.y > canvas.height) {
+                    balesEnreres.splice(i, 1);
+                }
+            }
+
+            if (punts > record) {
+                record = punts;
+                localStorage.setItem('espai_record_full_files', record);
+                txtRecord.innerText = record;
+            }
+        }
+
+        function dibuixar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = powerUpActiu ? '#38bdf8' : '#22c55e';
+            ctx.fillRect(jugador.x, jugador.y, jugador.amplada, jugador.alcada);
+
+            if (teEscut) {
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(jugador.x + jugador.amplada / 2, jugador.y + jugador.alcada / 2, 42, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Dibuixar Invasors amb el seu color corresponent segons la fila
+            for (let inv of invasors) {
+                if (inv.viu) {
+                    ctx.fillStyle = inv.color;
+                    ctx.fillRect(inv.x, inv.y, inv.amplada, inv.alcada);
                     
-                    break;
+                    // Ulls alienígenes
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(inv.x + 8, inv.y + 7, 6, 6);
+                    ctx.fillRect(inv.x + 31, inv.y + 7, 6, 6);
                 }
             }
-            
-            // Comprovar si els invasors han arribat al final
-            for (let invader of invaders) {
-                if (invader.alive && invader.y + invader.height >= player.y) {
-                    endGame();
-                    break;
-                }
+
+            if (cubEnergia) {
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(cubEnergia.x, cubEnergia.y, cubEnergia.amplada, cubEnergia.alcada);
+                ctx.strokeStyle = '#93c5fd';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(cubEnergia.x, cubEnergia.y, cubEnergia.amplada, cubEnergia.alcada);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 20px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(cubEnergia.vides, cubEnergia.x + cubEnergia.amplada / 2, cubEnergia.y + cubEnergia.alcada / 2 + 7);
+                ctx.textAlign = 'left';
             }
-            
-            // Comprovar si s'han eliminat tots els invasors
-            const aliveInvaders = invaders.filter(inv => inv.alive);
-            if (aliveInvaders.length === 0 && gameStarted) {
-                // Nivell completat, reiniciar amb més velocitat
-                initializeInvaders();
-                invaderSpeed += 0.2;
+
+            ctx.fillStyle = powerUpActiu ? '#38bdf8' : '#facc15';
+            for (let b of bales) {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radi, 0, Math.PI * 2);
+                ctx.fill();
             }
-        }
-        
-        // Iniciar joc
-        function startGame() {
-            if (gameStarted && !gameOver) return;
-            
-            resetGame();
-            gameStarted = true;
-            gameOver = false;
-            gameOverScreen.style.display = 'none';
-            
-            // Iniciar bucle del joc
-            gameLoop();
-        }
-        
-        // Bucle principal del joc
-        function gameLoop(timestamp) {
-            if (gameOver || !gameStarted || gamePaused) return;
-            
-            // Netejar el canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Actualitzar i gestionar power-ups
-            managePowerUps();
-            
-            // Moure i dibuixar elements
-            movePlayer();
-            shootPlayerBullet();
-            moveBullets();
-            moveInvaders(timestamp);
-            detectCollisions();
-            
-            // Dibuixar elements
-            drawInvaders();
-            drawPlayer();
-            drawBullets();
-            drawEnergyCube();
-            
-            // Continuar el bucle
-            animationId = requestAnimationFrame(gameLoop);
-        }
-        
-        // Finalitzar joc
-        function endGame() {
-            gameOver = true;
-            gameStarted = false;
-            
-            // Desactivar power-up si està actiu
-            if (shieldActive || powerShotActive) {
-                deactivatePowerUp();
+
+            ctx.fillStyle = '#f87171';
+            for (let b of balesEnreres) {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radi, 0, Math.PI * 2);
+                ctx.fill();
             }
-            
-            // Actualitzar millor puntuació si s'escau
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('spaceInvadersHighScore', highScore);
-            }
-            
-            // Mostrar pantalla de game over
-            finalScoreElement.textContent = score;
-            finalHighScoreElement.textContent = highScore;
-            gameOverScreen.style.display = 'block';
-        }
-        
-        // Reiniciar joc
-        function resetGame() {
-            score = 0;
-            lives = 3;
-            invaderSpeed = 1;
-            
-            scoreElement.textContent = score;
-            livesElement.textContent = lives;
-            
-            player.x = canvas.width / 2 - 25;
-            playerBullets.length = 0;
-            invaderBullets.length = 0;
-            
-            // Desactivar power-ups
-            deactivatePowerUp();
-            energyCube = null;
-            lastPowerUpTime = Date.now();
-            
-            initializeInvaders();
-            
-            if (animationId) {
-                cancelAnimationFrame(animationId);
+
+            if (!jocActiu) {
+                ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 26px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(missatgePantalla, canvas.width / 2, canvas.height / 2 - 25);
+
+                ctx.font = '18px sans-serif';
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText("Prem ESPAI per tornar a jugar", canvas.width / 2, canvas.height / 2 + 30);
+                ctx.textAlign = 'left';
             }
         }
-        
-        // Pausar/Continuar joc
-        function togglePause() {
-            if (!gameStarted || gameOver) return;
-            
-            gamePaused = !gamePaused;
-            
-            if (!gamePaused) {
-                gameLoop();
-            }
+
+        function bucle() {
+            actualitzar();
+            dibuixar();
+            requestAnimationFrame(bucle);
         }
-        
-        // Restablir millor puntuació
-        function resetHighScore() {
-            highScore = 0;
-            localStorage.setItem('spaceInvadersHighScore', highScore);
-            highScoreElement.textContent = highScore;
-            finalHighScoreElement.textContent = highScore;
-        }
-        
-        // Event listeners per teclat
-        document.addEventListener('keydown', (e) => {
-            if (e.key in keys) {
-                keys[e.key] = true;
-            }
-        });
-        
-        document.addEventListener('keyup', (e) => {
-            if (e.key in keys) {
-                keys[e.key] = false;
-            }
-        });
-        
-        // Event listeners pels botons
-        startButton.addEventListener('click', startGame);
-        pauseButton.addEventListener('click', togglePause);
-        restartButton.addEventListener('click', startGame);
-        resetScoreButton.addEventListener('click', resetHighScore);
-        
-        // Inicialitzar joc
-        initializeInvaders();
-        lastPowerUpTime = Date.now();
-        
-        // Dibuixar pantalla inicial
-        function drawInitialScreen() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawInvaders();
-            drawPlayer();
-            
-            // Dibuixar cub d'energia de mostra
-            ctx.save();
-            ctx.fillStyle = '#0099ff';
-            ctx.fillRect(350, 150, 30, 30);
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(350, 150, 30, 30);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('⚡', 365, 165);
-            ctx.font = 'bold 12px Arial';
-            ctx.fillText('3', 365, 140);
-            ctx.restore();
-            
-            // Text de benvinguda
-            ctx.fillStyle = '#00ffcc';
-            ctx.font = '30px "Courier New", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText('SPACE INVADERS', canvas.width/2, 80);
-            
-            ctx.font = '22px "Courier New", monospace';
-            ctx.fillStyle = '#ffcc00';
-            ctx.fillText('DISPARA al cub blau!', canvas.width/2, 220);
-            
-            ctx.font = '18px "Courier New", monospace';
-            ctx.fillStyle = '#00ffcc';
-            ctx.fillText('Prem "Començar Joc" per iniciar', canvas.width/2, 280);
-            
-            // Instruccions
-            ctx.font = '16px "Courier New", monospace';
-            ctx.fillStyle = '#ff9900';
-            ctx.fillText('Cub d\'energia: Dispara-li 3 vegades per activar power-up', canvas.width/2, 320);
-            ctx.fillText('Power-up: Escut + Trets potents durant 7 segons', canvas.width/2, 350);
-        }
-        
-        // Dibuixar pantalla inicial
-        drawInitialScreen();
+
+        crearInvasors();
+        actualitzarUI();
+        bucle();
     </script>
 </body>
 </html>
