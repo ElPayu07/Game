@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tres en Ratlla - Edició Botiga i Bot</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --gold: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        header {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            font-size: 1.5em;
+        }
+
+        .monedes-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--gold);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .nav-btn {
+            flex: 1;
+            padding: 10px;
+            background: var(--card-bg);
+            color: var(--text);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .nav-btn.active {
+            border-color: var(--accent);
+            background: #2d3748;
+        }
+
+        .seccio {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .seccio.active {
+            display: flex;
+        }
+
+        /* Controls de Configuració del Joc */
+        .config-panel {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .opcio-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        select {
+            padding: 8px;
+            background: #0f172a;
+            color: var(--text);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .nota-mode {
+            font-size: 0.85em;
+            color: var(--gold);
+            background: rgba(245, 158, 11, 0.1);
+            padding: 8px;
+            border-radius: 6px;
+            border-left: 3px solid var(--gold);
+        }
+
+        /* Estats del Joc */
+        .estat {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            min-height: 30px;
+            text-align: center;
+        }
+
+        /* Taulell */
+        .taulell {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 330px;
+            aspect-ratio: 1;
+            background-color: var(--card-bg);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .cella {
+            background-color: #0f172a;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .cella:hover {
+            background-color: #1a233a;
+        }
+
+        .btn-accio {
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 330px;
+            transition: background 0.2s;
+        }
+
+        .btn-accio:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Botiga */
+        .botiga-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+        }
+
+        .item-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid transparent;
+        }
+
+        .item-card.equipats {
+            border-color: #10b981;
+        }
+
+        .item-icones {
+            font-size: 2em;
+        }
+
+        .btn-comprar {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-comprar.comprar {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .btn-comprar.equipar {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-comprar.equipat {
+            background: #10b981;
+            color: #fff;
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Tres en Ratlla</h1>
+        <div class="monedes-display">🪙 <span id="monedes-count">0</span></div>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="canviarPestanya('joc')">🎮 Joc</button>
+        <button class="nav-btn" onclick="canviarPestanya('botiga')">🛒 Botiga</button>
+    </nav>
+
+    <!-- SECCIÓ JOC -->
+    <div id="seccio-joc" class="seccio active">
+        <div class="config-panel">
+            <div class="opcio-group">
+                <label for="mode">Mode de Joc:</label>
+                <select id="mode" onchange="canviarMode()">
+                    <option value="1p">1 Jugador (vs Bot)</option>
+                    <option value="2p">2 Jugadors (Local)</option>
+                </select>
+            </div>
+
+            <div class="opcio-group" id="group-dificultat">
+                <label for="dificultat">Dificultat IA:</label>
+                <select id="dificultat">
+                    <option value="facil">Fàcil</option>
+                    <option value="mitja">Mitjà</option>
+                    <option value="impossible" selected>Impossible (Minimax)</option>
+                </select>
+            </div>
+
+            <div id="nota-2p" class="nota-mode" style="display: none;">
+                🔒 En el mode 2 jugadors s'utilitzen obligatòriament els símbols clàssics (❌ i ⭕).
+            </div>
+        </div>
+
+        <div class="estat" id="estat">Torn del jugador</div>
+
+        <div class="taulell" id="taulell">
+            <div class="cella" data-index="0"></div>
+            <div class="cella" data-index="1"></div>
+            <div class="cella" data-index="2"></div>
+            <div class="cella" data-index="3"></div>
+            <div class="cella" data-index="4"></div>
+            <div class="cella" data-index="5"></div>
+            <div class="cella" data-index="6"></div>
+            <div class="cella" data-index="7"></div>
+            <div class="cella" data-index="8"></div>
+        </div>
+
+        <button class="btn-accio" onclick="reiniciarJoc()">Nova Partida</button>
+    </div>
+
+    <!-- SECCIÓ BOTIGA -->
+    <div id="seccio-botiga" class="seccio">
+        <div class="botiga-grid" id="botiga-container">
+            <!-- Es genera dinàmicament -->
+        </div>
+    </div>
+
+    <script>
+        // Dades de la botiga i skins
+        const skins = [
+            { id: 'classic', nom: 'Clàssic', p1: '❌', p2: '⭕', preu: 0 },
+            { id: 'espai', nom: 'Espai', p1: '🚀', p2: '👽', preu: 50 },
+            { id: 'fantasia', nom: 'Fantasia', p1: '🐉', p2: '🦄', preu: 100 },
+            { id: 'foc_gel', nom: 'Foc i Gel', p1: '🔥', p2: '❄️', preu: 150 },
+            { id: 'tecnologia', nom: 'Tecnologia', p1: '⚡', p2: '💎', preu: 250 }
+        ];
+
+        // Estat de l'usuari (desat a localStorage)
+        let monedes = parseInt(localStorage.getItem('monedes')) || 0;
+        let desblocats = JSON.parse(localStorage.getItem('desblocats')) || ['classic'];
+        let skinEquipada = localStorage.getItem('skinEquipada') || 'classic';
+
+        // Estat del Joc
+        let taulellEstat = ['', '', '', '', '', '', '', '', ''];
+        let jocActiu = true;
+        let tornP1 = true; // true = P1, false = P2/Bot
+
+        const millorsCombos = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        // Elements DOM
+        const elMonedes = document.getElementById('monedes-count');
+        const elEstat = document.getElementById('estat');
+        const ellesCella = document.querySelectorAll('.cella');
+        const selectMode = document.getElementById('mode');
+        const selectDificultat = document.getElementById('dificultat');
+        const groupDificultat = document.getElementById('group-dificultat');
+        const nota2p = document.getElementById('nota-2p');
+
+        function guardarDades() {
+            localStorage.setItem('monedes', monedes);
+            localStorage.setItem('desblocats', JSON.stringify(desblocats));
+            localStorage.setItem('skinEquipada', skinEquipada);
+            elMonedes.innerText = monedes;
+        }
+
+        function obtenirSimbols() {
+            const is2P = selectMode.value === '2p';
+            if (is2P) {
+                return { p1: '❌', p2: '⭕' };
+            }
+            const s = skins.find(item => item.id === skinEquipada) || skins[0];
+            return { p1: s.p1, p2: s.p2 };
+        }
+
+        function canviarPestanya(pestanya) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.seccio').forEach(s => s.classList.remove('active'));
+
+            if (pestanya === 'joc') {
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+                document.getElementById('seccio-joc').classList.add('active');
+            } else {
+                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+                document.getElementById('seccio-botiga').classList.add('active');
+                renderitzarBotiga();
+            }
+        }
+
+        function canviarMode() {
+            const is2P = selectMode.value === '2p';
+            groupDificultat.style.display = is2P ? 'none' : 'flex';
+            nota2p.style.display = is2P ? 'block' : 'none';
+            reiniciarJoc();
+        }
+
+        function gestioClicCella(e) {
+            const index = parseInt(e.target.getAttribute('data-index'));
+
+            if (taulellEstat[index] !== '' || !jocActiu) return;
+            if (selectMode.value === '1p' && !tornP1) return; // Torn del Bot
+
+            ferMoviment(index, tornP1 ? 'P1' : 'P2');
+
+            if (jocActiu && selectMode.value === '1p' && !tornP1) {
+                setTimeout(movimentBot, 400);
+            }
+        }
+
+        function ferMoviment(index, jugador) {
+            taulellEstat[index] = jugador;
+            const simbols = obtenirSimbols();
+            ellesCella[index].innerText = jugador === 'P1' ? simbols.p1 : simbols.p2;
+
+            const guanyador = comprovarGuanyador(taulellEstat);
+
+            if (guanyador) {
+                finalitzarJoc(guanyador);
+            } else {
+                tornP1 = !tornP1;
+                actualitzarTextEstat();
+            }
+        }
+
+        function actualitzarTextEstat() {
+            const simbols = obtenirSimbols();
+            if (selectMode.value === '1p') {
+                elEstat.innerText = tornP1 ? `Torn del Jugador (${simbols.p1})` : `Pensant la IA... (${simbols.p2})`;
+            } else {
+                elEstat.innerText = tornP1 ? `Torn del Jugador 1 (${simbols.p1})` : `Torn del Jugador 2 (${simbols.p2})`;
+            }
+        }
+
+        function comprovarGuanyador(taula) {
+            for (let combo of millorsCombos) {
+                const [a, b, c] = combo;
+                if (taula[a] && taula[a] === taula[b] && taula[a] === taula[c]) {
+                    return taula[a]; // Retorna 'P1' o 'P2'
+                }
+            }
+            if (!taula.includes('')) return 'empat';
+            return null;
+        }
+
+        function finalitzarJoc(resultat) {
+            jocActiu = false;
+            const simbols = obtenirSimbols();
+
+            if (resultat === 'empat') {
+                elEstat.innerText = "🤝 Empat!";
+                guanyarMonedes(5);
+            } else if (resultat === 'P1') {
+                elEstat.innerText = `🎉 Ha guanyat ${simbols.p1}!`;
+                const recompensa = selectMode.value === '1p' ? 
+                    (selectDificultat.value === 'impossible' ? 50 : selectDificultat.value === 'mitja' ? 25 : 10) : 15;
+                guanyarMonedes(recompensa);
+            } else {
+                elEstat.innerText = selectMode.value === '1p' ? `🤖 Ha guanyat el Bot (${simbols.p2})!` : `🎉 Ha guanyat el Jugador 2 (${simbols.p2})!`;
+            }
+        }
+
+        function guanyarMonedes(quantitat) {
+            monedes += quantitat;
+            guardarDades();
+            elEstat.innerText += ` (+${quantitat} 🪙)`;
+        }
+
+        function reiniciarJoc() {
+            taulellEstat = ['', '', '', '', '', '', '', '', ''];
+            jocActiu = true;
+            tornP1 = true;
+            ellesCella.forEach(c => c.innerText = '');
+            actualitzarTextEstat();
+        }
+
+        // --- LÒGICA DE LA IA / BOT ---
+        function movimentBot() {
+            if (!jocActiu) return;
+            const dif = selectDificultat.value;
+            let index;
+
+            if (dif === 'facil') {
+                index = movimentAleatori();
+            } else if (dif === 'mitja') {
+                index = Math.random() < 0.5 ? movimentAleatori() : millorMovimentMinimax();
+            } else { // Impossible
+                index = millorMovimentMinimax();
+            }
+
+            if (index !== undefined && index !== null) {
+                ferMoviment(index, 'P2');
+            }
+        }
+
+        function movimentAleatori() {
+            const buits = taulellEstat.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+            return buits.length > 0 ? buits[Math.floor(Math.random() * buits.length)] : null;
+        }
+
+        function millorMovimentMinimax() {
+            let millorPuntuacio = -Infinity;
+            let mov;
+            for (let i = 0; i < 9; i++) {
+                if (taulellEstat[i] === '') {
+                    taulellEstat[i] = 'P2';
+                    let puntuacio = minimax(taulellEstat, 0, false);
+                    taulellEstat[i] = '';
+                    if (puntuacio > millorPuntuacio) {
+                        millorPuntuacio = puntuacio;
+                        mov = i;
+                    }
+                }
+            }
+            return mov;
+        }
+
+        function minimax(taula, profunditat, esMaximizant) {
+            let res = comprovarGuanyador(taula);
+            if (res === 'P2') return 10 - profunditat;
+            if (res === 'P1') return profunditat - 10;
+            if (res === 'empat') return 0;
+
+            if (esMaximizant) {
+                let millorPuntuacio = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (taula[i] === '') {
+                        taula[i] = 'P2';
+                        let puntuacio = minimax(taula, profunditat + 1, false);
+                        taula[i] = '';
+                        millorPuntuacio = Math.max(puntuacio, millorPuntuacio);
+                    }
+                }
+                return millorPuntuacio;
+            } else {
+                let millorPuntuacio = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (taula[i] === '') {
+                        taula[i] = 'P1';
+                        let puntuacio = minimax(taula, profunditat + 1, true);
+                        taula[i] = '';
+                        millorPuntuacio = Math.min(puntuacio, millorPuntuacio);
+                    }
+                }
+                return millorPuntuacio;
+            }
+        }
+
+        // --- BOTIGA ---
+        function renderitzarBotiga() {
+            const container = document.getElementById('botiga-container');
+            container.innerHTML = '';
+
+            skins.forEach(skin => {
+                const desblocat = desblocats.includes(skin.id);
+                const equipat = skinEquipada === skin.id;
+
+                const card = document.createElement('div');
+                card.className = `item-card ${equipat ? 'equipats' : ''}`;
+                
+                let botoHTML = '';
+                if (equipat) {
+                    botoHTML = `<button class="btn-comprar equipat">Equipat</button>`;
+                } else if (desblocat) {
+                    botoHTML = `<button class="btn-comprar equipar" onclick="equiparSkin('${skin.id}')">Equipar</button>`;
+                } else {
+                    botoHTML = `<button class="btn-comprar comprar" onclick="comprarSkin('${skin.id}', ${skin.preu})">Comprar (${skin.preu} 🪙)</button>`;
+                }
+
+                card.innerHTML = `
+                    <h3>${skin.nom}</h3>
+                    <div class="item-icones">${skin.p1} vs ${skin.p2}</div>
+                    ${botoHTML}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function comprarSkin(id, preu) {
+            if (monedes >= preu) {
+                monedes -= preu;
+                desblocats.push(id);
+                skinEquipada = id;
+                guardarDades();
+                renderitzarBotiga();
+                reiniciarJoc();
+            } else {
+                alert("No tens suficients monedes!");
+            }
+        }
+
+        function equiparSkin(id) {
+            skinEquipada = id;
+            guardarDades();
+            renderitzarBotiga();
+            reiniciarJoc();
+        }
+
+        // Inicialització
+        ellesCella.forEach(c => c.addEventListener('click', gestioClicCella));
+        guardarDades();
+        reiniciarJoc();
+    </script>
+</body>
+</html>
