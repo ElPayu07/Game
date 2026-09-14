@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tetris</title>
+<title>Tetris HTML</title>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -121,12 +121,15 @@
     .mobile-controls { display: grid; }
     .keys { display: none; }
   }
+
+.flash{position:absolute;inset:4px;border-radius:6px;pointer-events:none;opacity:0}.flash.active{animation:flash .28s ease-out}@keyframes flash{0%{opacity:.7;background:#fff}100%{opacity:0}}
+.float-text{position:absolute;left:50%;top:45%;font-weight:900;font-size:20px;text-shadow:0 2px 7px #000;animation:float .75s ease-out forwards;z-index:5;pointer-events:none}@keyframes float{0%{transform:translate(-50%,0) scale(.7);opacity:0}15%{transform:translate(-50%,-8px) scale(1.15);opacity:1}100%{transform:translate(-50%,-55px) scale(1);opacity:0}}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="game-wrap">
-    <canvas id="board" width="300" height="600"></canvas>
+    <canvas id="board" width="300" height="600"></canvas><div id="flash" class="flash"></div><div id="effects"></div>
 
     <div id="overlay" class="overlay">
       <h2 id="overlayTitle">Game Over</h2>
@@ -150,6 +153,7 @@
     <div class="stat"><div class="label">PUNTUACIÓ</div><div id="score" class="value">0</div></div>
     <div class="stat"><div class="label">LÍNIES</div><div id="lines" class="value">0</div></div>
     <div class="stat"><div class="label">NIVELL</div><div id="level" class="value">1</div></div>
+    <div class="stat"><div class="label">HIGH SCORE</div><div id="highScore" class="value">0</div></div>
 
     <div class="label" style="display:block;margin-top:13px;">SEGÜENT</div>
     <canvas id="next" width="120" height="120"></canvas>
@@ -196,6 +200,8 @@ const shapes = {
 };
 
 let board, piece, nextPiece, score, lines, level, dropTimer, lastTime, paused, gameOver;
+let highScore = Number(localStorage.getItem('tetrisHighScore') || 0);
+let particles=[]; let shake=0;
 
 function newBoard() {
   return Array.from({length: ROWS}, () => Array(COLS).fill(null));
@@ -286,18 +292,23 @@ function hardDrop() {
 
 function lockPiece() {
   merge();
+  shake=Math.max(shake,2);
   clearLines();
   piece = nextPiece;
   nextPiece = createPiece();
   if (collide(piece)) endGame();
 }
 
+function spawnParticles(row,type){for(let x=0;x<COLS;x++)for(let i=0;i<3;i++)particles.push({x:x*CELL+CELL/2,y:row*CELL+CELL/2,vx:(Math.random()-.5)*5,vy:-Math.random()*4-1,size:Math.random()*4+2,life:30,maxLife:30,color:colors[type]||'#fff'});}
+function flashBoard(){const f=document.getElementById('flash');f.classList.remove('active');void f.offsetWidth;f.classList.add('active');}
+function floatingText(t,c='#fff'){const e=document.createElement('div');e.className='float-text';e.textContent=t;e.style.color=c;document.getElementById('effects').appendChild(e);setTimeout(()=>e.remove(),800);}
 function clearLines() {
   let cleared = 0;
   outer: for (let y = ROWS - 1; y >= 0; y--) {
     for (let x = 0; x < COLS; x++) {
       if (!board[y][x]) continue outer;
     }
+    for(let x=0;x<COLS;x++) spawnParticles(y,board[y][x]);
     board.splice(y, 1);
     board.unshift(Array(COLS).fill(null));
     cleared++;
@@ -309,6 +320,8 @@ function clearLines() {
     score += points * level;
     lines += cleared;
     level = Math.floor(lines / 10) + 1;
+    flashBoard(); shake=Math.min(10,3+cleared*2);
+    floatingText(['','+100','DOBLE! +300','TRIPLE! +500','TETRIS! +800 🔥'][cleared],cleared===4?'#ffe34d':'#fff');
   }
 }
 
@@ -343,6 +356,10 @@ function draw() {
       if (v && piece.y+y >= 0) drawCell(ctx,piece.x+x,piece.y+y,colors[piece.type],CELL);
     }));
   }
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life--;ctx.globalAlpha=p.life/p.maxLife;ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size,p.size);});
+  ctx.globalAlpha=1;
+  ctx.restore();
 }
 
 function drawNext() {
@@ -361,14 +378,24 @@ function updateUI() {
   document.getElementById('score').textContent = score.toLocaleString('ca-ES');
   document.getElementById('lines').textContent = lines;
   document.getElementById('level').textContent = level;
+  document.getElementById('highScore').textContent = highScore.toLocaleString('ca-ES');
   drawNext();
 }
 
 function endGame() {
   gameOver = true;
+
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem('tetrisHighScore', String(highScore));
+  }
+
   document.getElementById('overlayTitle').textContent = 'Game Over';
-  document.getElementById('overlayText').textContent = 'Puntuació: ' + score.toLocaleString('ca-ES');
+  document.getElementById('overlayText').textContent =
+    'Puntuació: ' + score.toLocaleString('ca-ES') +
+    (score === highScore ? ' 🏆 Nou rècord!' : '');
   document.getElementById('overlay').classList.add('show');
+  updateUI();
 }
 
 function togglePause() {
@@ -392,6 +419,7 @@ function restart() {
   level = 1;
   paused = false;
   gameOver = false;
+  particles=[]; shake=0;
   nextPiece = createPiece();
   piece = createPiece();
   document.getElementById('overlay').classList.remove('show');
