@@ -182,6 +182,7 @@
                 <option value="facil">Fàcil</option>
                 <option value="mitja" selected>Mitjà</option>
                 <option value="dificil">Difícil</option>
+                <option value="expert">Expert</option>
             </select>
         </div>
     </div>
@@ -232,7 +233,6 @@
                     cella.setAttribute('data-fila', f);
                     cella.setAttribute('data-col', c);
                     
-                    // Event de clic
                     cella.addEventListener('click', () => {
                         if (!jocActiu || botPensant) return;
                         if (selectorMode.value === '1p' && jugadorActual === 'groc') return;
@@ -249,21 +249,18 @@
             for (let f = FILES - 1; f >= 0; f--) {
                 if (taula[f][col] === '') return f;
             }
-            return -1; // Columna plena
+            return -1;
         }
 
         function ferMoviment(columna) {
             let fila = obtenirFilaDisponible(matriuJoc, columna);
-            if (fila === -1) return; // Columna plena
+            if (fila === -1) return; 
 
-            // Col·loca fitxa a la matriu
             matriuJoc[fila][columna] = jugadorActual;
             
-            // Actualitza interfície
             const cellaFisica = document.querySelector(`.cella[data-fila='${fila}'][data-col='${columna}']`);
             cellaFisica.classList.add(jugadorActual);
 
-            // Comprova si la jugada acaba el joc
             if (comprovarVictoria(matriuJoc, fila, columna, jugadorActual, true)) {
                 finalitzarJoc(jugadorActual);
             } else if (!matriuJoc[0].includes('')) {
@@ -284,8 +281,7 @@
                     textEstat.innerText = "L'ordinador està pensant...";
                     indicadorTorn.style.backgroundColor = "var(--p2-color)";
                     botPensant = true;
-                    // Retard simulat per donar sensació de joc (entre 0.5s i 1s)
-                    const tempsEspera = Math.random() * 500 + 500;
+                    const tempsEspera = Math.random() * 400 + 400; // Més ràpid per donar dinamisme
                     setTimeout(tornBot, tempsEspera); 
                 } else {
                     textEstat.innerText = "Torn del Jugador 2 (Groc)";
@@ -301,7 +297,6 @@
             let columnaEscollida = -1;
             let valides = [];
 
-            // Obtenir columnes on es pot tirar
             for(let c = 0; c < COLUMNES; c++) {
                 if(obtenirFilaDisponible(matriuJoc, c) !== -1) valides.push(c);
             }
@@ -319,12 +314,12 @@
         }
 
         function moureBotIntelligent(valides, dificultat) {
-            // 1. Puc guanyar ara mateix? (Tant el mitjà com el difícil ho comproven sempre)
+            // 1. Puc guanyar ara mateix? (Prioritat màxima sempre)
             for (let col of valides) {
                 let fila = obtenirFilaDisponible(matriuJoc, col);
                 matriuJoc[fila][col] = 'groc';
                 let guanya = comprovarVictoria(matriuJoc, fila, col, 'groc', false);
-                matriuJoc[fila][col] = ''; // desfem
+                matriuJoc[fila][col] = ''; 
                 if (guanya) return col;
             }
 
@@ -334,7 +329,7 @@
                 let fila = obtenirFilaDisponible(matriuJoc, col);
                 matriuJoc[fila][col] = 'vermell';
                 let perd = comprovarVictoria(matriuJoc, fila, col, 'vermell', false);
-                matriuJoc[fila][col] = ''; // desfem
+                matriuJoc[fila][col] = ''; 
                 if (perd) {
                     columnaBloqueig = col;
                     break;
@@ -342,32 +337,80 @@
             }
 
             if (columnaBloqueig !== -1) {
-                if (dificultat === 'dificil') {
-                    return columnaBloqueig; // El bot difícil SEMPRE bloqueja
+                if (dificultat === 'dificil' || dificultat === 'expert') {
+                    return columnaBloqueig; 
                 } else if (dificultat === 'mitja') {
-                    // El bot mitjà té un 75% de possibilitats de bloquejar-te l'atac.
-                    // Així li dóna un toc més "humà" (de vegades s'equivoca)
-                    if (Math.random() < 0.75) {
-                        return columnaBloqueig;
+                    if (Math.random() < 0.75) return columnaBloqueig;
+                }
+            }
+
+            // --- NOU: FILTRE EXPERT (No regalar victòries) ---
+            // El mode expert descarta les columnes on, si juga, permet a l'altre guanyar just a sobre
+            let columnesCandidates = valides;
+            
+            if (dificultat === 'expert') {
+                let columnesSegures = [];
+                for (let col of valides) {
+                    let fila = obtenirFilaDisponible(matriuJoc, col);
+                    if (fila > 0) { // Si hi ha espai a sobre
+                        matriuJoc[fila][col] = 'groc'; // El bot hi juga
+                        matriuJoc[fila - 1][col] = 'vermell'; // Simulem que el jugador juga just a sobre
+                        
+                        let regalaPartida = comprovarVictoria(matriuJoc, fila - 1, col, 'vermell', false);
+                        
+                        matriuJoc[fila - 1][col] = ''; 
+                        matriuJoc[fila][col] = ''; 
+                        
+                        if (!regalaPartida) {
+                            columnesSegures.push(col); // És un moviment segur
+                        }
+                    } else {
+                        columnesSegures.push(col); // És la darrera fila amunt, no passa res
+                    }
+                }
+                
+                // Si absolutament TOTS els moviments regalen la partida, juga on pugui (ja ha perdut)
+                if (columnesSegures.length > 0) {
+                    columnesCandidates = columnesSegures;
+                }
+            }
+
+            // 3. Anticipació a trampes
+            if (dificultat === 'dificil' || dificultat === 'expert') {
+                // Bloquejar 3-en-ratlla del jugador (només si la casella és segura, gràcies al filtre de dalt)
+                for (let col of columnesCandidates) {
+                    let fila = obtenirFilaDisponible(matriuJoc, col);
+                    matriuJoc[fila][col] = 'vermell';
+                    let trampa = comprovarVictoria(matriuJoc, fila, col, 'vermell', false, 3);
+                    matriuJoc[fila][col] = ''; 
+                    if (trampa) return col; 
+                }
+                
+                // NOU (EXPERT): Intentar fer els propis 3-en-ratlla
+                if (dificultat === 'expert') {
+                    for (let col of columnesCandidates) {
+                        let fila = obtenirFilaDisponible(matriuJoc, col);
+                        matriuJoc[fila][col] = 'groc';
+                        let atac = comprovarVictoria(matriuJoc, fila, col, 'groc', false, 3);
+                        matriuJoc[fila][col] = ''; 
+                        if (atac) return col; 
                     }
                 }
             }
 
-            // 3. Tria columna base per defecte si no hi ha perill imminent
-            if (dificultat === 'dificil') {
-                // El difícil prioritza el centre del taulell
+            // 4. Estratègia base: Prioritzar centre
+            if (dificultat === 'dificil' || dificultat === 'expert') {
                 const ordrePreferencia = [3, 2, 4, 1, 5, 0, 6]; 
                 for (let col of ordrePreferencia) {
-                    if (valides.includes(col)) return col;
+                    if (columnesCandidates.includes(col)) return col;
                 }
             }
             
-            // Si és mode Mitjà, o si el difícil no troba espai (poc probable), llença a l'atzar
-            return valides[Math.floor(Math.random() * valides.length)];
+            return columnesCandidates[Math.floor(Math.random() * columnesCandidates.length)];
         }
 
         // --- SISTEMA DE VICTORIA ---
-        function comprovarVictoria(taula, fila, col, color, ressaltar) {
+        function comprovarVictoria(taula, fila, col, color, ressaltar, objectiu = 4) {
             const direccions = [
                 [[0, 1], [0, -1]], // Horitzontal
                 [[1, 0], [-1, 0]], // Vertical
@@ -391,7 +434,7 @@
                     }
                 }
 
-                if (comptador >= 4) {
+                if (comptador >= objectiu) {
                     if (ressaltar) ressaltarVictoria(cellesGuanyadores);
                     return true;
                 }
@@ -402,7 +445,7 @@
         function ressaltarVictoria(celles) {
             celles.forEach(pos => {
                 const c = document.querySelector(`.cella[data-fila='${pos.f}'][data-col='${pos.c}']`);
-                c.classList.add('guanyadora');
+                if (c) c.classList.add('guanyadora');
             });
         }
 
@@ -433,7 +476,6 @@
             crearTaulell();
         }
 
-        // Inicia el taulell per primer cop
         crearTaulell();
 
     </script>
