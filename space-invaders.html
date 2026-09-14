@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invasors Espacials - Colors per Files</title>
+    <title>Invasors Espacials</title>
     <style>
         * {
             box-sizing: border-box;
@@ -14,7 +14,7 @@
         html, body {
             width: 100%;
             height: 100%;
-            background-color: #05070d;
+            background-color: #030712;
             color: #f8fafc;
             font-family: 'Segoe UI', system-ui, sans-serif;
             overflow: hidden;
@@ -24,6 +24,7 @@
             justify-content: center;
         }
 
+        /* HUD Superior */
         .hud {
             position: absolute;
             top: 0;
@@ -33,13 +34,13 @@
             justify-content: space-around;
             align-items: center;
             background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(6px);
+            backdrop-filter: blur(8px);
             padding: 12px 20px;
             font-size: 1.1em;
             font-weight: bold;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 10;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
         }
 
         .hud div {
@@ -52,6 +53,7 @@
             color: #38bdf8;
         }
 
+        /* Canvas adaptat */
         canvas {
             background-color: #020617;
             max-width: 100vw;
@@ -63,13 +65,14 @@
             margin-top: 30px;
         }
 
+        /* Peu d'instruccions */
         .instruccions-flotants {
             position: absolute;
             bottom: 8px;
             font-size: 0.8em;
-            color: #64748b;
-            background: rgba(15, 23, 42, 0.6);
-            padding: 6px 16px;
+            color: #94a3b8;
+            background: rgba(15, 23, 42, 0.7);
+            padding: 6px 18px;
             border-radius: 20px;
             pointer-events: none;
             backdrop-filter: blur(4px);
@@ -81,6 +84,7 @@
 
     <div class="hud">
         <div>Punts: <span id="txt-punts">0</span></div>
+        <div>Nivell: <span id="txt-nivell">1</span></div>
         <div>Vides: <span id="txt-vides">❤️ ❤️ ❤️</span></div>
         <div>Rècord: <span id="txt-record">0</span></div>
     </div>
@@ -88,7 +92,7 @@
     <canvas id="canvas" width="900" height="650"></canvas>
 
     <div class="instruccions-flotants">
-        Mou-te amb <b>Fletxes / A-D</b> | Dispara amb <b>Espai</b> | Destrueix el cub blau (3 vides) per aconseguir Escut i Potència!
+        <b>Fletxes / A-D</b>: Moure | <b>Espai</b>: Disparar | Destrueix el cub blau (3 vides) per a Escut i Potència 7s
     </div>
 
     <script>
@@ -96,59 +100,102 @@
         const ctx = canvas.getContext('2d');
 
         const txtPunts = document.getElementById('txt-punts');
+        const txtNivell = document.getElementById('txt-nivell');
         const txtVides = document.getElementById('txt-vides');
         const txtRecord = document.getElementById('txt-record');
 
+        // Estat Global del Joc
         let punts = 0;
+        let nivell = 1;
         let vides = 3;
-        let record = localStorage.getItem('espai_record_full_files') || 0;
+        let record = localStorage.getItem('espai_record_avancat') || 0;
         txtRecord.innerText = record;
 
         let jocActiu = true;
+        let transicioNivell = false;
         let missatgePantalla = "Prem ESPAI per Començar";
 
+        // Tecles premudes
         const tecles = {};
         window.addEventListener('keydown', e => {
             if (e.code === 'Space') {
                 if (!jocActiu) reiniciarJoc();
-                else disparar();
+                else if (!transicioNivell) disparar();
                 e.preventDefault();
             }
             tecles[e.code] = true;
         });
         window.addEventListener('keyup', e => tecles[e.code] = false);
 
+        // 1. Fons d'Estrelles Parallax (3 Capes)
+        const estrelles = [];
+        for (let i = 0; i < 120; i++) {
+            estrelles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                mida: Math.random() * 2 + 0.5,
+                vel: Math.random() * 1.5 + 0.2, // Velocitats diferents per profunditat
+                opacitat: Math.random() * 0.7 + 0.3
+            });
+        }
+
+        // 2. Partícules d'Explosió
+        let particules = [];
+
+        function crearExplosio(x, y, color) {
+            for (let i = 0; i < 18; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const velocitat = Math.random() * 4.5 + 1;
+                particules.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * velocitat,
+                    vy: Math.sin(angle) * velocitat,
+                    mida: Math.random() * 3 + 2,
+                    color: color,
+                    vida: 1.0 // Opacitat/temps de vida
+                });
+            }
+        }
+
+        // Jugador
         const jugador = {
-            x: canvas.width / 2 - 30,
-            y: canvas.height - 50,
-            amplada: 60,
-            alcada: 24,
-            velocitat: 6
+            x: canvas.width / 2 - 25,
+            y: canvas.height - 55,
+            amplada: 50,
+            alcada: 30,
+            velocitat: 6.5
         };
 
         let bales = [];
         let balesEnreres = [];
         let invasors = [];
+        let totalInvasorsOnada = 0;
         let direccioInvasors = 1;
 
+        // Cub d'energia
         let cubEnergia = null;
         let temporitzadorCub = 0;
         let tempsProximCub = recapturarTempsCub();
 
+        // Power-up / Escut
         let powerUpActiu = false;
         let teEscut = false;
         let tempsPowerUpFi = 0;
 
         function recapturarTempsCub() {
-            return Math.floor(Math.random() * 300) + 1500;
+            return Math.floor(Math.random() * 300) + 1500; // 25-30 segons
         }
 
         function reiniciarJoc() {
             punts = 0;
+            nivell = 1;
             vides = 3;
             jocActiu = true;
+            transicioNivell = false;
             bales = [];
             balesEnreres = [];
+            particules = [];
             powerUpActiu = false;
             teEscut = false;
             temporitzadorCub = 0;
@@ -159,41 +206,60 @@
 
         function crearInvasors() {
             invasors = [];
-            const files = 5; // 5 files en total
+            const files = 5;
             const columnes = 9;
             const espaiX = 80;
             const iniciX = (canvas.width - (columnes * espaiX)) / 2;
 
             for (let f = 0; f < files; f++) {
-                // Definir color segons la distància al jugador (f = 4 i f = 3 són les més properes)
-                let colorInv = '#ef4444'; // Vermella per defecte (més llunyana, f = 0)
+                let colorInv = '#ef4444'; // Fila 0: Vermella (més llunyana)
+                let tipus = 'saucer';
+
                 if (f === 1 || f === 2) {
-                    colorInv = '#f97316'; // Taronges (files intermèdies)
+                    colorInv = '#f97316'; // Files 1,2: Taronges
+                    tipus = 'insect';
                 } else if (f === 3 || f === 4) {
-                    colorInv = '#22c55e'; // Verdes (dues files més properes al jugador)
+                    colorInv = '#22c55e'; // Files 3,4: Verdes (més properes)
+                    tipus = 'squid';
                 }
 
                 for (let c = 0; c < columnes; c++) {
                     invasors.push({
                         x: iniciX + c * espaiX,
-                        y: 60 + f * 45,
-                        amplada: 45,
+                        y: 65 + f * 45,
+                        amplada: 42,
                         alcada: 28,
-                        viu: true,
-                        color: colorInv
+                        fila: f,
+                        tipus: tipus,
+                        color: colorInv,
+                        viu: true
                     });
                 }
             }
+            totalInvasorsOnada = invasors.length;
+        }
+
+        function seguentNivell() {
+            transicioNivell = true;
+            bales = [];
+            balesEnreres = [];
+            nivell++;
+            actualitzarUI();
+
+            setTimeout(() => {
+                crearInvasors();
+                transicioNivell = false;
+            }, 1200);
         }
 
         function disparar() {
-            if (!jocActiu) return;
+            if (!jocActiu || transicioNivell) return;
             let midaBala = powerUpActiu ? 10 : 5;
-            let velBala = powerUpActiu ? 11 : 7.5;
+            let velBala = powerUpActiu ? 12 : 8;
             
             bales.push({
                 x: jugador.x + jugador.amplada / 2 - midaBala / 2,
-                y: jugador.y,
+                y: jugador.y - 5,
                 radi: midaBala,
                 vel: velBala
             });
@@ -201,14 +267,35 @@
 
         function actualitzarUI() {
             txtPunts.innerText = punts;
+            txtNivell.innerText = nivell;
             let cors = "";
             for (let i = 0; i < vides; i++) cors += "❤️ ";
             txtVides.innerText = cors.trim();
         }
 
+        // Lògica del joc
         function actualitzar() {
-            if (!jocActiu) return;
+            // Actualitzar estrelles (fons) sempre
+            for (let e of estrelles) {
+                e.y += e.vel;
+                if (e.y > canvas.height) {
+                    e.y = 0;
+                    e.x = Math.random() * canvas.width;
+                }
+            }
 
+            // Actualitzar partícules d'explosió
+            for (let i = particules.length - 1; i >= 0; i--) {
+                let p = particules[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vida -= 0.025;
+                if (p.vida <= 0) particules.splice(i, 1);
+            }
+
+            if (!jocActiu || transicioNivell) return;
+
+            // Moviment Jugador
             if ((tecles['ArrowLeft'] || tecles['KeyA']) && jugador.x > 15) {
                 jugador.x -= jugador.velocitat;
             }
@@ -216,19 +303,21 @@
                 jugador.x += jugador.velocitat;
             }
 
+            // Temporitzador Power-up (7s)
             if (powerUpActiu && Date.now() > tempsPowerUpFi) {
                 powerUpActiu = false;
                 teEscut = false;
             }
 
+            // Cub d'Energia Blau
             if (!cubEnergia) {
                 temporitzadorCub++;
                 if (temporitzadorCub >= tempsProximCub) {
                     cubEnergia = {
                         x: Math.random() * (canvas.width - 60),
                         y: 50,
-                        amplada: 45,
-                        alcada: 45,
+                        amplada: 42,
+                        alcada: 42,
                         vides: 3,
                         velY: 1.2
                     };
@@ -240,14 +329,17 @@
                 if (cubEnergia.y > 180 || cubEnergia.y < 40) cubEnergia.velY *= -1;
             }
 
+            // Bales Jugador
             for (let i = bales.length - 1; i >= 0; i--) {
                 bales[i].y -= bales[i].vel;
 
+                // Impacte en Cub d'Energia
                 if (cubEnergia && 
                     bales[i].x > cubEnergia.x && bales[i].x < cubEnergia.x + cubEnergia.amplada &&
                     bales[i].y > cubEnergia.y && bales[i].y < cubEnergia.y + cubEnergia.alcada) {
                     
                     cubEnergia.vides--;
+                    crearExplosio(bales[i].x, bales[i].y, '#3b82f6');
                     bales.splice(i, 1);
 
                     if (cubEnergia.vides <= 0) {
@@ -259,7 +351,8 @@
                     continue;
                 }
 
-                let eliminatBala = false;
+                // Impacte en Invasors
+                let destruita = false;
                 for (let j = 0; j < invasors.length; j++) {
                     let inv = invasors[j];
                     if (inv.viu &&
@@ -269,63 +362,74 @@
                         inv.viu = false;
                         punts += 10;
                         actualitzarUI();
-                        eliminatBala = true;
+                        crearExplosio(inv.x + inv.amplada/2, inv.y + inv.alcada/2, inv.color);
+                        destruita = true;
                         break;
                     }
                 }
 
-                if (eliminatBala || bales[i].y < 0) {
+                if (destruita || bales[i].y < 0) {
                     bales.splice(i, 1);
                 }
             }
 
+            // Dificultat Dinàmica: Més ràpid com menys invasors queden + augment per Nivell
+            let viusComptador = invasors.filter(i => i.viu).length;
+            
+            if (viusComptador === 0 && !transicioNivell) {
+                seguentNivell();
+                return;
+            }
+
+            let fraccioEliminats = 1 - (viusComptador / totalInvasorsOnada);
+            // Acceleració progressiva estil Space Invaders clàssic
+            let multVelocitatDificultat = 1 + (fraccioEliminats * 2.2); 
+            let velActualInvasors = (1.2 + (nivell - 1) * 0.25) * multVelocitatDificultat;
+
             let tocarVora = false;
-            let viusComptador = 0;
             for (let inv of invasors) {
                 if (!inv.viu) continue;
-                viusComptador++;
-                inv.x += direccioInvasors * 1.3;
+                inv.x += direccioInvasors * velActualInvasors;
 
-                if (inv.x <= 20 || inv.x >= canvas.width - inv.amplada - 20) {
+                if (inv.x <= 15 || inv.x >= canvas.width - inv.amplada - 15) {
                     tocarVora = true;
                 }
 
                 if (inv.y + inv.alcada >= jugador.y) {
                     jocActiu = false;
-                    missatgePantalla = "Els invasors han arribat al final! Game Over";
+                    missatgePantalla = "Els invasors han conquerit la Terra! Game Over";
                 }
-            }
-
-            if (viusComptador === 0) {
-                jocActiu = false;
-                missatgePantalla = "🏆 Victòria! Has destruït tots els invasors!";
             }
 
             if (tocarVora) {
                 direccioInvasors *= -1;
                 for (let inv of invasors) {
-                    inv.y += 20;
+                    inv.y += 18;
                 }
             }
 
-            if (Math.random() < 0.03 && invasors.filter(i => i.viu).length > 0) {
+            // Trets dels Invasors
+            let freqDispar = 0.02 + (nivell * 0.005);
+            if (Math.random() < freqDispar && viusComptador > 0) {
                 let vius = invasors.filter(i => i.viu);
                 let tirador = vius[Math.floor(Math.random() * vius.length)];
                 balesEnreres.push({
                     x: tirador.x + tirador.amplada / 2,
                     y: tirador.y + tirador.alcada,
                     radi: 5,
-                    vel: 4.5
+                    vel: 4.5 + (nivell * 0.2)
                 });
             }
 
+            // Actualitzar Bales Enemigues
             for (let i = balesEnreres.length - 1; i >= 0; i--) {
                 balesEnreres[i].y += balesEnreres[i].vel;
-
                 let b = balesEnreres[i];
+
                 if (b.x > jugador.x && b.x < jugador.x + jugador.amplada &&
                     b.y > jugador.y && b.y < jugador.y + jugador.alcada) {
                     
+                    crearExplosio(b.x, b.y, teEscut ? '#38bdf8' : '#ef4444');
                     balesEnreres.splice(i, 1);
 
                     if (teEscut) {
@@ -336,7 +440,7 @@
                         actualitzarUI();
                         if (vides <= 0) {
                             jocActiu = false;
-                            missatgePantalla = "Game Over - T'has quedat sense vides";
+                            missatgePantalla = "Game Over - Nau Destruïda";
                         }
                     }
                     continue;
@@ -347,54 +451,152 @@
                 }
             }
 
+            // Rècord
             if (punts > record) {
                 record = punts;
-                localStorage.setItem('espai_record_full_files', record);
+                localStorage.setItem('espai_record_avancat', record);
                 txtRecord.innerText = record;
             }
+        }
+
+        // --- Renderitzat Gràfic Avançat ---
+
+        function dibuixarJugador() {
+            ctx.save();
+            ctx.translate(jugador.x + jugador.amplada / 2, jugador.y + jugador.alcada / 2);
+
+            let colorPrincipal = powerUpActiu ? '#38bdf8' : '#22c55e';
+
+            // Propulsor del darrere (foc)
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.moveTo(-6, 12);
+            ctx.lineTo(0, 20 + Math.random() * 6);
+            ctx.lineTo(6, 12);
+            ctx.fill();
+
+            // Cos del Caça Espacial
+            ctx.fillStyle = colorPrincipal;
+            ctx.beginPath();
+            ctx.moveTo(0, -18); // Punta
+            ctx.lineTo(22, 12); // Ala dreta
+            ctx.lineTo(12, 8);
+            ctx.lineTo(0, 12); // Cua interior
+            ctx.lineTo(-12, 8);
+            ctx.lineTo(-22, 12); // Ala esquerra
+            ctx.closePath();
+            ctx.fill();
+
+            // Cabina de control
+            ctx.fillStyle = '#0284c7';
+            ctx.beginPath();
+            ctx.arc(0, -2, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Escut
+            if (teEscut) {
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#38bdf8';
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.arc(0, 0, 36, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function dibuixarInvasor(inv) {
+            ctx.save();
+            ctx.fillStyle = inv.color;
+            ctx.shadowColor = inv.color;
+            ctx.shadowBlur = 6;
+
+            const x = inv.x;
+            const y = inv.y;
+            const w = inv.amplada;
+            const h = inv.alcada;
+
+            ctx.beginPath();
+            if (inv.tipus === 'saucer') {
+                // Nau Tipus Cúpula (Fila Superior)
+                ctx.ellipse(x + w/2, y + h/2 + 2, w/2, h/3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(x + w/2, y + h/3, 7, 0, Math.PI, true);
+                ctx.fill();
+            } else if (inv.tipus === 'insect') {
+                // Nau Insecte / Antenes (Files Mitjanes)
+                ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 6);
+                ctx.fill();
+                // Detalls ulls
+                ctx.fillStyle = '#000';
+                ctx.fillRect(x + 10, y + 10, 6, 6);
+                ctx.fillRect(x + w - 16, y + 10, 6, 6);
+            } else {
+                // Alien Pop / Classic (Files Inferiors)
+                ctx.beginPath();
+                ctx.arc(x + w/2, y + 10, 14, Math.PI, 0);
+                ctx.lineTo(x + w - 6, y + h);
+                ctx.lineTo(x + w/2, y + h - 6);
+                ctx.lineTo(x + 6, y + h);
+                ctx.closePath();
+                ctx.fill();
+                // Ulls brillants
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(x + 12, y + 10, 5, 5);
+                ctx.fillRect(x + w - 17, y + 10, 5, 5);
+            }
+
+            ctx.restore();
         }
 
         function dibuixar() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = powerUpActiu ? '#38bdf8' : '#22c55e';
-            ctx.fillRect(jugador.x, jugador.y, jugador.amplada, jugador.alcada);
-
-            if (teEscut) {
-                ctx.strokeStyle = '#38bdf8';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.arc(jugador.x + jugador.amplada / 2, jugador.y + jugador.alcada / 2, 42, 0, Math.PI * 2);
-                ctx.stroke();
+            // 1. Dibuixar Estrelles (Fons Parallax)
+            for (let e of estrelles) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${e.opacitat})`;
+                ctx.fillRect(e.x, e.y, e.mida, e.mida);
             }
 
-            // Dibuixar Invasors amb el seu color corresponent segons la fila
+            // 2. Partícules d'Explosió
+            for (let p of particules) {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, p.vida);
+                ctx.fillRect(p.x, p.y, p.mida, p.mida);
+            }
+            ctx.globalAlpha = 1.0;
+
+            // 3. Jugador
+            dibuixarJugador();
+
+            // 4. Invasors
             for (let inv of invasors) {
-                if (inv.viu) {
-                    ctx.fillStyle = inv.color;
-                    ctx.fillRect(inv.x, inv.y, inv.amplada, inv.alcada);
-                    
-                    // Ulls alienígenes
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(inv.x + 8, inv.y + 7, 6, 6);
-                    ctx.fillRect(inv.x + 31, inv.y + 7, 6, 6);
-                }
+                if (inv.viu) dibuixarInvasor(inv);
             }
 
+            // 5. Cub d'Energia
             if (cubEnergia) {
                 ctx.fillStyle = '#3b82f6';
+                ctx.shadowColor = '#60a5fa';
+                ctx.shadowBlur = 10;
                 ctx.fillRect(cubEnergia.x, cubEnergia.y, cubEnergia.amplada, cubEnergia.alcada);
                 ctx.strokeStyle = '#93c5fd';
-                ctx.lineWidth = 3;
+                ctx.lineWidth = 2;
                 ctx.strokeRect(cubEnergia.x, cubEnergia.y, cubEnergia.amplada, cubEnergia.alcada);
-                
+                ctx.shadowBlur = 0;
+
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 20px sans-serif';
+                ctx.font = 'bold 18px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(cubEnergia.vides, cubEnergia.x + cubEnergia.amplada / 2, cubEnergia.y + cubEnergia.alcada / 2 + 7);
+                ctx.fillText(cubEnergia.vides, cubEnergia.x + cubEnergia.amplada / 2, cubEnergia.y + cubEnergia.alcada / 2 + 6);
                 ctx.textAlign = 'left';
             }
 
+            // 6. Bales del Jugador
             ctx.fillStyle = powerUpActiu ? '#38bdf8' : '#facc15';
             for (let b of bales) {
                 ctx.beginPath();
@@ -402,6 +604,7 @@
                 ctx.fill();
             }
 
+            // 7. Bales Enemigues
             ctx.fillStyle = '#f87171';
             for (let b of balesEnreres) {
                 ctx.beginPath();
@@ -409,18 +612,31 @@
                 ctx.fill();
             }
 
+            // Missatge Transició de Nivell
+            if (transicioNivell) {
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 36px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`NIVELL ${nivell}`, canvas.width / 2, canvas.height / 2);
+                ctx.font = '18px sans-serif';
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillText("S'aproxima una nova onada d'invasors...", canvas.width / 2, canvas.height / 2 + 40);
+                ctx.textAlign = 'left';
+            }
+
+            // Pantalla de Game Over
             if (!jocActiu) {
                 ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 26px sans-serif';
+                ctx.font = 'bold 28px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText(missatgePantalla, canvas.width / 2, canvas.height / 2 - 25);
+                ctx.fillText(missatgePantalla, canvas.width / 2, canvas.height / 2 - 20);
 
                 ctx.font = '18px sans-serif';
                 ctx.fillStyle = '#38bdf8';
-                ctx.fillText("Prem ESPAI per tornar a jugar", canvas.width / 2, canvas.height / 2 + 30);
+                ctx.fillText("Prem ESPAI per tornar a jugar", canvas.width / 2, canvas.height / 2 + 35);
                 ctx.textAlign = 'left';
             }
         }
@@ -431,6 +647,7 @@
             requestAnimationFrame(bucle);
         }
 
+        // Inicialització
         crearInvasors();
         actualitzarUI();
         bucle();
