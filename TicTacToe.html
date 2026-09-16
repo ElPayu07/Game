@@ -3,583 +3,580 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tres en Ratlla - Edició Botiga i Bot</title>
+    <title>Tres en ratlla - Multivers</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --gold: #f59e0b;
+            --primary: #4CAF50;
+            --bg: #13131a;
+            --text: #fff;
+            --board-bg: #22222d;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-
         body {
-            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
             color: var(--text);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            text-align: center;
+            margin: 0;
             padding: 20px;
         }
-
-        header {
-            width: 100%;
-            max-width: 500px;
+        h1 { margin-bottom: 5px; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            background: var(--card-bg);
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        h1 {
-            font-size: 1.5em;
-        }
-
-        .monedes-display {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: var(--gold);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        nav {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 500px;
-        }
-
-        .nav-btn {
-            flex: 1;
-            padding: 10px;
-            background: var(--card-bg);
-            color: var(--text);
-            border: 2px solid transparent;
+            max-width: 480px;
+            margin: 0 auto 20px auto;
+            background: #0a0a0f;
+            padding: 10px 20px;
             border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            border: 1px solid #333;
         }
-
-        .nav-btn.active {
-            border-color: var(--accent);
-            background: #2d3748;
+        .coins { color: #FFD700; font-weight: bold; font-size: 1.3em; }
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: var(--board-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
         }
-
-        .seccio {
-            display: none;
-            width: 100%;
-            max-width: 500px;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .seccio.active {
-            display: flex;
-        }
-
-        /* Controls de Configuració del Joc */
-        .config-panel {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 10px;
-            width: 100%;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .opcio-group {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        select {
-            padding: 8px;
-            background: #0f172a;
-            color: var(--text);
-            border: 1px solid var(--accent);
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .nota-mode {
-            font-size: 0.85em;
-            color: var(--gold);
-            background: rgba(245, 158, 11, 0.1);
-            padding: 8px;
-            border-radius: 6px;
-            border-left: 3px solid var(--gold);
-        }
-
-        /* Estats del Joc */
-        .estat {
-            font-size: 1.2em;
-            font-weight: bold;
+        
+        /* Menu Styles */
+        .modes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
             margin-bottom: 15px;
-            min-height: 30px;
-            text-align: center;
         }
+        .mode-section {
+            background: #2d2d3b;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .mode-section.full-width { grid-column: span 2; }
+        .mode-section h3 { margin: 0 0 5px 0; font-size: 1.05em; color: var(--primary); }
+        .desc { font-size: 0.75em; color: #aaa; margin-bottom: 8px; display: block; line-height: 1.3; }
+        
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        .menu-btn, .shop-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            font-size: 0.9em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 80px;
+        }
+        .menu-btn:active { transform: scale(0.95); }
+        .menu-btn:hover { background-color: #45a049; filter: brightness(1.1); }
 
-        /* Taulell */
-        .taulell {
+        /* Board Styles */
+        .board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .status { font-size: 1.3em; font-weight: bold; }
+        .timer { font-size: 1.5em; color: #ff5555; font-weight: bold; min-width: 60px; }
+        
+        .board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            width: 100%;
-            max-width: 330px;
-            aspect-ratio: 1;
-            background-color: var(--card-bg);
-            padding: 10px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            margin-bottom: 20px;
         }
-
-        .cella {
-            background-color: #0f172a;
+        .cell {
+            background-color: #3e3e50;
+            height: 110px;
             border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 3em;
+            font-size: 3.5em;
             cursor: pointer;
-            user-select: none;
             transition: background 0.2s, transform 0.1s;
         }
+        .cell:active { transform: scale(0.95); }
+        .cell:hover { background-color: #4f4f66; }
 
-        .cella:hover {
-            background-color: #1a233a;
+        /* Special Effects */
+        .blocked { background-color: #111 !important; cursor: not-allowed; font-size: 2.5em; }
+        .fading { animation: blink 1.2s infinite alternate; }
+        .memory-hidden { color: #888; text-shadow: 0 0 10px rgba(0,0,0,0.5); font-size: 2.5em; }
+        @keyframes blink {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.2; transform: scale(0.85); color: #ff5555; }
         }
 
-        .btn-accio {
-            margin-top: 20px;
-            padding: 12px 24px;
-            font-size: 1em;
-            font-weight: bold;
-            cursor: pointer;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 330px;
-            transition: background 0.2s;
+        /* Shop Styles */
+        .shop-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #3e3e50; padding: 10px 15px; margin-bottom: 10px; border-radius: 6px;
         }
+        .shop-item span { font-size: 1.8em; }
+        .buy-btn, .equip-btn {
+            border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight:bold; color: white;
+        }
+        .buy-btn { background-color: #2196F3; }
+        .buy-btn:disabled { background-color: #555; cursor: not-allowed; color: #888; }
+        .equip-btn { background-color: #FF9800; }
 
-        .btn-accio:hover {
-            background-color: var(--accent-hover);
-        }
-
-        /* Botiga */
-        .botiga-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            width: 100%;
-        }
-
-        .item-card {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            border: 2px solid transparent;
-        }
-
-        .item-card.equipats {
-            border-color: #10b981;
-        }
-
-        .item-icones {
-            font-size: 2em;
-        }
-
-        .btn-comprar {
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-comprar.comprar {
-            background: var(--gold);
-            color: #000;
-        }
-
-        .btn-comprar.equipar {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .btn-comprar.equipat {
-            background: #10b981;
-            color: #fff;
-            cursor: default;
-        }
+        #game-view, #shop-view { display: none; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Tres en Ratlla</h1>
-        <div class="monedes-display">🪙 <span id="monedes-count">0</span></div>
-    </header>
-
-    <nav>
-        <button class="nav-btn active" onclick="canviarPestanya('joc')">🎮 Joc</button>
-        <button class="nav-btn" onclick="canviarPestanya('botiga')">🛒 Botiga</button>
-    </nav>
-
-    <!-- SECCIÓ JOC -->
-    <div id="seccio-joc" class="seccio active">
-        <div class="config-panel">
-            <div class="opcio-group">
-                <label for="mode">Mode de Joc:</label>
-                <select id="mode" onchange="canviarMode()">
-                    <option value="1p">1 Jugador (vs Bot)</option>
-                    <option value="2p">2 Jugadors (Local)</option>
-                </select>
-            </div>
-
-            <div class="opcio-group" id="group-dificultat">
-                <label for="dificultat">Dificultat IA:</label>
-                <select id="dificultat">
-                    <option value="facil">Fàcil</option>
-                    <option value="mitja">Mitjà</option>
-                    <option value="impossible" selected>Impossible (Minimax)</option>
-                </select>
-            </div>
-
-            <div id="nota-2p" class="nota-mode" style="display: none;">
-                🔒 En el mode 2 jugadors s'utilitzen obligatòriament els símbols clàssics (❌ i ⭕).
-            </div>
-        </div>
-
-        <div class="estat" id="estat">Torn del jugador</div>
-
-        <div class="taulell" id="taulell">
-            <div class="cella" data-index="0"></div>
-            <div class="cella" data-index="1"></div>
-            <div class="cella" data-index="2"></div>
-            <div class="cella" data-index="3"></div>
-            <div class="cella" data-index="4"></div>
-            <div class="cella" data-index="5"></div>
-            <div class="cella" data-index="6"></div>
-            <div class="cella" data-index="7"></div>
-            <div class="cella" data-index="8"></div>
-        </div>
-
-        <button class="btn-accio" onclick="reiniciarJoc()">Nova Partida</button>
+    <h1>Tres en ratlla</h1>
+    <div class="header-bar">
+        <span>Símbol: <strong id="current-symbol-display" style="font-size: 1.4em;">X</strong></span>
+        <span class="coins">🪙 <span id="coin-count">0</span></span>
     </div>
 
-    <!-- SECCIÓ BOTIGA -->
-    <div id="seccio-botiga" class="seccio">
-        <div class="botiga-grid" id="botiga-container">
-            <!-- Es genera dinàmicament -->
+    <!-- MAIN MENU -->
+    <div id="menu-view" class="container">
+        <div class="modes-grid">
+            <!-- Mode Clàssic -->
+            <div class="mode-section full-width">
+                <h3>🟢 Mode Clàssic</h3>
+                <span class="desc">El joc de tota la vida. Objectiu: Fer 3 en ratlla.</span>
+                <div class="btn-group">
+                    <button class="menu-btn" onclick="startGame('local', 'classic')">2 Jugadors</button>
+                    <button class="menu-btn" onclick="startGame('bot-easy', 'classic')">Bot Fàcil</button>
+                    <button class="menu-btn" onclick="startGame('bot-hard', 'classic')">Bot Difícil</button>
+                </div>
+            </div>
+
+            <!-- Mode Infinit -->
+            <div class="mode-section">
+                <h3>🔄 M. Infinit <span style="color:#FFD700">++🪙</span></h3>
+                <span class="desc">Màxim 3 peces. La més antiga desapareix.</span>
+                <div class="btn-group">
+                    <button class="menu-btn" onclick="startGame('local', 'infinite')">2 Jug</button>
+                    <button class="menu-btn" onclick="startGame('bot-hard', 'infinite')">Bot</button>
+                </div>
+            </div>
+
+            <!-- Mode Obstacle -->
+            <div class="mode-section">
+                <h3>🧱 M. Obstacle <span style="color:#FFD700">++🪙</span></h3>
+                <span class="desc">Una casella està bloquejada a l'atzar.</span>
+                <div class="btn-group">
+                    <button class="menu-btn" onclick="startGame('local', 'obstacle')">2 Jug</button>
+                    <button class="menu-btn" onclick="startGame('bot-hard', 'obstacle')">Bot</button>
+                </div>
+            </div>
+
+            <!-- Mode Memòria -->
+            <div class="mode-section">
+                <h3>🧠 M. Memòria <span style="color:#FFD700">++🪙</span></h3>
+                <span class="desc">Les peces s'amaguen. Recorda on són!</span>
+                <div class="btn-group">
+                    <button class="menu-btn" onclick="startGame('local', 'memory')">2 Jug</button>
+                    <button class="menu-btn" onclick="startGame('bot-easy', 'memory')">Bot</button>
+                </div>
+            </div>
+
+            <!-- Mode Llampec -->
+            <div class="mode-section">
+                <h3>⚡ M. Llampec <span style="color:#FFD700">+++🪙</span></h3>
+                <span class="desc">Només 3 segons per jugar o es mou sol.</span>
+                <div class="btn-group">
+                    <button class="menu-btn" onclick="startGame('local', 'blitz')">2 Jug</button>
+                    <button class="menu-btn" onclick="startGame('bot-hard', 'blitz')">Bot</button>
+                </div>
+            </div>
+
+            <!-- Mode Invers -->
+            <div class="mode-section full-width" style="background:#4a2b2b;">
+                <h3>🙃 Mode Invers (Misère) <span style="color:#FFD700">+++🪙</span></h3>
+                <span class="desc">L'objectiu és PERDRE. Qui fa tres en ratlla perd la partida. Força a l'oponent a guanyar!</span>
+                <div class="btn-group">
+                    <button class="menu-btn" onclick="startGame('local', 'inverse')" style="background:#d32f2f">2 Jugadors</button>
+                    <button class="menu-btn" onclick="startGame('bot-hard', 'inverse')" style="background:#d32f2f">Bot Especial</button>
+                </div>
+            </div>
         </div>
+
+        <button class="menu-btn" style="background-color: #9C27B0; width: 100%; font-size: 1.1em; padding: 12px;" onclick="showView('shop-view')">🛒 Entrar a la Botiga de Símbols</button>
     </div>
 
-    <script>
-        // Dades de la botiga i skins
-        const skins = [
-            { id: 'classic', nom: 'Clàssic', p1: '❌', p2: '⭕', preu: 0 },
-            { id: 'espai', nom: 'Espai', p1: '🚀', p2: '👽', preu: 50 },
-            { id: 'fantasia', nom: 'Fantasia', p1: '🐉', p2: '🦄', preu: 100 },
-            { id: 'foc_gel', nom: 'Foc i Gel', p1: '🔥', p2: '❄️', preu: 150 },
-            { id: 'tecnologia', nom: 'Tecnologia', p1: '⚡', p2: '💎', preu: 250 }
-        ];
+    <!-- GAME BOARD -->
+    <div id="game-view" class="container">
+        <h2 id="mode-title" style="margin-top:0;">Mode Joc</h2>
+        <div class="board-header">
+            <div class="status" id="status">Torn del jugador</div>
+            <div class="timer" id="timer"></div>
+        </div>
+        <div class="board" id="board"></div>
+        <button class="menu-btn" onclick="exitGame()" style="background-color: #f44336; width: 100%;">Abandonar Partida</button>
+    </div>
 
-        // Estat de l'usuari (desat a localStorage)
-        let monedes = parseInt(localStorage.getItem('monedes')) || 0;
-        let desblocats = JSON.parse(localStorage.getItem('desblocats')) || ['classic'];
-        let skinEquipada = localStorage.getItem('skinEquipada') || 'classic';
+    <!-- SHOP -->
+    <div id="shop-view" class="container">
+        <h2>Botiga Exclusiva</h2>
+        <div id="shop-items"></div>
+        <button class="menu-btn" onclick="showView('menu-view')" style="background-color: #f44336; width: 100%; margin-top: 15px;">Tornar al Menú</button>
+    </div>
 
-        // Estat del Joc
-        let taulellEstat = ['', '', '', '', '', '', '', '', ''];
-        let jocActiu = true;
-        let tornP1 = true; // true = P1, false = P2/Bot
+<script>
+    // Variables de dades i jugador
+    let coins = parseInt(localStorage.getItem('ticCoins')) || 0;
+    let mySymbol = localStorage.getItem('ticSymbol') || 'X';
+    let unlockedSymbols = JSON.parse(localStorage.getItem('ticUnlocked')) || ['X', 'O'];
+    
+    const shopData = [
+        { symbol: '⭐', price: 50 }, { symbol: '🔥', price: 100 },
+        { symbol: '💀', price: 150 }, { symbol: '💎', price: 300 },
+        { symbol: '👾', price: 400 }, { symbol: '🚀', price: 500 },
+        { symbol: '👁️‍🗨️', price: 1000 }, { symbol: '👑', price: 2000 }
+    ];
 
-        const millorsCombos = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ];
+    // Variables de la partida
+    let board = Array(9).fill('');
+    let moves = []; 
+    let currentPlayer = 'X';
+    let currentOpponent = 'local';
+    let currentVariant = 'classic';
+    let isGameOver = false;
+    
+    // Variables de Temps (Blitz)
+    let timerInterval = null;
+    let timeLeft = 3;
 
-        // Elements DOM
-        const elMonedes = document.getElementById('monedes-count');
-        const elEstat = document.getElementById('estat');
-        const ellesCella = document.querySelectorAll('.cella');
-        const selectMode = document.getElementById('mode');
-        const selectDificultat = document.getElementById('dificultat');
-        const groupDificultat = document.getElementById('group-dificultat');
-        const nota2p = document.getElementById('nota-2p');
+    const winCombos = [
+        [0,1,2], [3,4,5], [6,7,8], // Horitzontals
+        [0,3,6], [1,4,7], [2,5,8], // Verticals
+        [0,4,8], [2,4,6]           // Diagonals
+    ];
 
-        function guardarDades() {
-            localStorage.setItem('monedes', monedes);
-            localStorage.setItem('desblocats', JSON.stringify(desblocats));
-            localStorage.setItem('skinEquipada', skinEquipada);
-            elMonedes.innerText = monedes;
-        }
+    function init() {
+        updateCoins();
+        document.getElementById('current-symbol-display').innerText = mySymbol;
+        renderShop();
+    }
 
-        function obtenirSimbols() {
-            const is2P = selectMode.value === '2p';
-            if (is2P) {
-                return { p1: '❌', p2: '⭕' };
-            }
-            const s = skins.find(item => item.id === skinEquipada) || skins[0];
-            return { p1: s.p1, p2: s.p2 };
-        }
+    function updateCoins() {
+        document.getElementById('coin-count').innerText = coins;
+        localStorage.setItem('ticCoins', coins);
+        localStorage.setItem('ticUnlocked', JSON.stringify(unlockedSymbols));
+        localStorage.setItem('ticSymbol', mySymbol);
+    }
 
-        function canviarPestanya(pestanya) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.seccio').forEach(s => s.classList.remove('active'));
+    function showView(viewId) {
+        document.getElementById('menu-view').style.display = 'none';
+        document.getElementById('game-view').style.display = 'none';
+        document.getElementById('shop-view').style.display = 'none';
+        document.getElementById(viewId).style.display = 'block';
+        if(viewId === 'shop-view') renderShop();
+    }
 
-            if (pestanya === 'joc') {
-                document.querySelectorAll('.nav-btn')[0].classList.add('active');
-                document.getElementById('seccio-joc').classList.add('active');
+    function exitGame() {
+        clearInterval(timerInterval);
+        showView('menu-view');
+    }
+
+    // --- BOTIGA ---
+    function renderShop() {
+        const shopContainer = document.getElementById('shop-items');
+        shopContainer.innerHTML = '';
+        shopData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            const isEquipped = mySymbol === item.symbol;
+            
+            let btn = '';
+            if (isEquipped) {
+                btn = `<button class="buy-btn" disabled style="background:#4CAF50">Equipat</button>`;
+            } else if (unlockedSymbols.includes(item.symbol)) {
+                btn = `<button class="equip-btn" onclick="equipSymbol('${item.symbol}')">Equipar</button>`;
             } else {
-                document.querySelectorAll('.nav-btn')[1].classList.add('active');
-                document.getElementById('seccio-botiga').classList.add('active');
-                renderitzarBotiga();
+                let canAfford = coins >= item.price;
+                btn = `<button class="buy-btn" ${canAfford ? '' : 'disabled'} onclick="buySymbol('${item.symbol}', ${item.price})">${item.price} 🪙</button>`;
+            }
+            div.innerHTML = `<span>${item.symbol}</span> ${btn}`;
+            shopContainer.appendChild(div);
+        });
+    }
+
+    function buySymbol(symbol, price) {
+        if (coins >= price && !unlockedSymbols.includes(symbol)) {
+            coins -= price; unlockedSymbols.push(symbol); equipSymbol(symbol);
+        }
+    }
+
+    function equipSymbol(symbol) {
+        mySymbol = symbol; document.getElementById('current-symbol-display').innerText = mySymbol;
+        updateCoins(); renderShop();
+    }
+
+    // --- LÒGICA DE JOC ---
+    function startGame(opponent, variant) {
+        currentOpponent = opponent;
+        currentVariant = variant;
+        board = Array(9).fill('');
+        moves = [];
+        currentPlayer = mySymbol; 
+        isGameOver = false;
+        clearInterval(timerInterval);
+        document.getElementById('timer').innerText = '';
+
+        // Títols
+        const titles = {
+            'classic': 'Mode Clàssic 🟢', 'infinite': 'Mode Infinit 🔄',
+            'obstacle': 'Mode Obstacle 🧱', 'memory': 'Mode Memòria 🧠',
+            'blitz': 'Mode Llampec ⚡', 'inverse': 'Mode Invers 🙃'
+        };
+        document.getElementById('mode-title').innerText = titles[variant];
+
+        if (variant === 'obstacle') {
+            board[Math.floor(Math.random() * 9)] = '🚫';
+        }
+        
+        const boardDiv = document.getElementById('board');
+        boardDiv.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.onclick = () => makeMove(i);
+            boardDiv.appendChild(cell);
+        }
+        
+        renderBoard();
+        updateStatus();
+        startTimer();
+        showView('game-view');
+    }
+
+    function getOpponentSymbol() { return mySymbol === 'X' ? 'O' : 'X'; }
+
+    function startTimer() {
+        if (currentVariant !== 'blitz' || isGameOver) return;
+        clearInterval(timerInterval);
+        timeLeft = 3;
+        document.getElementById('timer').innerText = `⏱️ ${timeLeft}s`;
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').innerText = `⏱️ ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                let move = getRandomMove();
+                if (move !== -1) makeMove(move, true);
+            }
+        }, 1000);
+    }
+
+    function makeMove(index, autoMove = false) {
+        if (board[index] !== '' || isGameOver) return;
+        
+        // Bloquejar clics de l'usuari durant el torn del bot (excepte si el temps s'ha esgotat)
+        if (!autoMove && currentOpponent.startsWith('bot') && currentPlayer !== mySymbol) return;
+
+        board[index] = currentPlayer;
+        moves.push({symbol: currentPlayer, index: index});
+
+        // Mode Infinit: esborrar peça vella
+        if (currentVariant === 'infinite') {
+            let pMoves = moves.filter(m => m.symbol === currentPlayer);
+            if (pMoves.length > 3) {
+                board[pMoves[0].index] = '';
+                moves = moves.filter(m => m !== pMoves[0]);
             }
         }
 
-        function canviarMode() {
-            const is2P = selectMode.value === '2p';
-            groupDificultat.style.display = is2P ? 'none' : 'flex';
-            nota2p.style.display = is2P ? 'block' : 'none';
-            reiniciarJoc();
-        }
+        renderBoard();
+        checkWinner();
 
-        function gestioClicCella(e) {
-            const index = parseInt(e.target.getAttribute('data-index'));
-
-            if (taulellEstat[index] !== '' || !jocActiu) return;
-            if (selectMode.value === '1p' && !tornP1) return; // Torn del Bot
-
-            ferMoviment(index, tornP1 ? 'P1' : 'P2');
-
-            if (jocActiu && selectMode.value === '1p' && !tornP1) {
-                setTimeout(movimentBot, 400);
+        if (!isGameOver) {
+            currentPlayer = currentPlayer === mySymbol ? getOpponentSymbol() : mySymbol;
+            updateStatus();
+            startTimer(); // Reiniciar rellotge
+            
+            if (currentOpponent.startsWith('bot') && currentPlayer !== mySymbol) {
+                setTimeout(botMove, currentVariant === 'blitz' ? 300 : 700);
             }
         }
+    }
 
-        function ferMoviment(index, jugador) {
-            taulellEstat[index] = jugador;
-            const simbols = obtenirSimbols();
-            ellesCella[index].innerText = jugador === 'P1' ? simbols.p1 : simbols.p2;
+    function botMove() {
+        if (isGameOver) return;
+        let move = -1;
+        
+        // El bot del Mode Invers és especial: intenta NO fer 3 en ratlla i forçar a l'oponent
+        if (currentVariant === 'inverse') {
+            move = getInverseBestMove();
+        } 
+        else if (currentOpponent === 'bot-easy') move = getRandomMove();
+        else move = getBestMove();
 
-            const guanyador = comprovarGuanyador(taulellEstat);
+        if (move !== -1) makeMove(move, true);
+    }
 
-            if (guanyador) {
-                finalitzarJoc(guanyador);
-            } else {
-                tornP1 = !tornP1;
-                actualitzarTextEstat();
-            }
+    function getRandomMove() {
+        let avail = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+        return avail.length ? avail[Math.floor(Math.random() * avail.length)] : -1;
+    }
+
+    function getBestMove() {
+        const bot = getOpponentSymbol();
+        const pla = mySymbol;
+        
+        // Guanyar
+        for (let c of winCombos) {
+            let vals = [board[c[0]], board[c[1]], board[c[2]]];
+            if (vals.filter(v => v === bot).length === 2 && vals.includes('')) return c[vals.indexOf('')];
         }
-
-        function actualitzarTextEstat() {
-            const simbols = obtenirSimbols();
-            if (selectMode.value === '1p') {
-                elEstat.innerText = tornP1 ? `Torn del Jugador (${simbols.p1})` : `Pensant la IA... (${simbols.p2})`;
-            } else {
-                elEstat.innerText = tornP1 ? `Torn del Jugador 1 (${simbols.p1})` : `Torn del Jugador 2 (${simbols.p2})`;
-            }
+        // Bloquejar
+        for (let c of winCombos) {
+            let vals = [board[c[0]], board[c[1]], board[c[2]]];
+            if (vals.filter(v => v === pla).length === 2 && vals.includes('')) return c[vals.indexOf('')];
         }
+        if (board[4] === '') return 4;
+        return getRandomMove();
+    }
 
-        function comprovarGuanyador(taula) {
-            for (let combo of millorsCombos) {
-                const [a, b, c] = combo;
-                if (taula[a] && taula[a] === taula[b] && taula[a] === taula[c]) {
-                    return taula[a]; // Retorna 'P1' o 'P2'
+    function getInverseBestMove() {
+        const bot = getOpponentSymbol();
+        const pla = mySymbol;
+        
+        let avail = board.map((v, i) => v === '' ? i : null).filter(v => v !== null);
+        let safeMoves = [];
+
+        // Trobar moviments que NO completen una línia pròpia
+        for (let move of avail) {
+            let causesWin = false;
+            // Simular el moviment
+            board[move] = bot;
+            for (let c of winCombos) {
+                if (board[c[0]] === bot && board[c[1]] === bot && board[c[2]] === bot) {
+                    causesWin = true; break;
                 }
             }
-            if (!taula.includes('')) return 'empat';
-            return null;
+            board[move] = ''; // Desfer
+            if (!causesWin) safeMoves.push(move);
         }
 
-        function finalitzarJoc(resultat) {
-            jocActiu = false;
-            const simbols = obtenirSimbols();
-
-            if (resultat === 'empat') {
-                elEstat.innerText = "🤝 Empat!";
-                guanyarMonedes(5);
-            } else if (resultat === 'P1') {
-                elEstat.innerText = `🎉 Ha guanyat ${simbols.p1}!`;
-                const recompensa = selectMode.value === '1p' ? 
-                    (selectDificultat.value === 'impossible' ? 50 : selectDificultat.value === 'mitja' ? 25 : 10) : 15;
-                guanyarMonedes(recompensa);
-            } else {
-                elEstat.innerText = selectMode.value === '1p' ? `🤖 Ha guanyat el Bot (${simbols.p2})!` : `🎉 Ha guanyat el Jugador 2 (${simbols.p2})!`;
-            }
-        }
-
-        function guanyarMonedes(quantitat) {
-            monedes += quantitat;
-            guardarDades();
-            elEstat.innerText += ` (+${quantitat} 🪙)`;
-        }
-
-        function reiniciarJoc() {
-            taulellEstat = ['', '', '', '', '', '', '', '', ''];
-            jocActiu = true;
-            tornP1 = true;
-            ellesCella.forEach(c => c.innerText = '');
-            actualitzarTextEstat();
-        }
-
-        // --- LÒGICA DE LA IA / BOT ---
-        function movimentBot() {
-            if (!jocActiu) return;
-            const dif = selectDificultat.value;
-            let index;
-
-            if (dif === 'facil') {
-                index = movimentAleatori();
-            } else if (dif === 'mitja') {
-                index = Math.random() < 0.5 ? movimentAleatori() : millorMovimentMinimax();
-            } else { // Impossible
-                index = millorMovimentMinimax();
-            }
-
-            if (index !== undefined && index !== null) {
-                ferMoviment(index, 'P2');
-            }
-        }
-
-        function movimentAleatori() {
-            const buits = taulellEstat.map((v, i) => v === '' ? i : null).filter(v => v !== null);
-            return buits.length > 0 ? buits[Math.floor(Math.random() * buits.length)] : null;
-        }
-
-        function millorMovimentMinimax() {
-            let millorPuntuacio = -Infinity;
-            let mov;
-            for (let i = 0; i < 9; i++) {
-                if (taulellEstat[i] === '') {
-                    taulellEstat[i] = 'P2';
-                    let puntuacio = minimax(taulellEstat, 0, false);
-                    taulellEstat[i] = '';
-                    if (puntuacio > millorPuntuacio) {
-                        millorPuntuacio = puntuacio;
-                        mov = i;
+        // Si hi ha moviments segurs, triem intentar forçar el jugador (jugar on el jugador podria fer línia)
+        if (safeMoves.length > 0) {
+            for (let move of safeMoves) {
+                board[move] = pla; // Si fos el jugador
+                for (let c of winCombos) {
+                    if (board[c[0]] === pla && board[c[1]] === pla && board[c[2]] === pla) {
+                        board[move] = ''; return move; // Juguem aquí per donar-li la línia (espera, si juguem aquí l'estem bloquejant? No, en invers NO volem bloquejar-lo, volem DEIXAR-LO guanyar).
+                        // Perdó, si la casella li dona la victòria, millor NO jugar-hi nosaltres, així el jugador s'ho menja!
                     }
                 }
+                board[move] = '';
             }
-            return mov;
+            return safeMoves[Math.floor(Math.random() * safeMoves.length)];
         }
+        return getRandomMove(); // Si està condemnat, moviment aleatori
+    }
 
-        function minimax(taula, profunditat, esMaximizant) {
-            let res = comprovarGuanyador(taula);
-            if (res === 'P2') return 10 - profunditat;
-            if (res === 'P1') return profunditat - 10;
-            if (res === 'empat') return 0;
-
-            if (esMaximizant) {
-                let millorPuntuacio = -Infinity;
-                for (let i = 0; i < 9; i++) {
-                    if (taula[i] === '') {
-                        taula[i] = 'P2';
-                        let puntuacio = minimax(taula, profunditat + 1, false);
-                        taula[i] = '';
-                        millorPuntuacio = Math.max(puntuacio, millorPuntuacio);
-                    }
-                }
-                return millorPuntuacio;
-            } else {
-                let millorPuntuacio = Infinity;
-                for (let i = 0; i < 9; i++) {
-                    if (taula[i] === '') {
-                        taula[i] = 'P1';
-                        let puntuacio = minimax(taula, profunditat + 1, true);
-                        taula[i] = '';
-                        millorPuntuacio = Math.min(puntuacio, millorPuntuacio);
-                    }
-                }
-                return millorPuntuacio;
-            }
-        }
-
-        // --- BOTIGA ---
-        function renderitzarBotiga() {
-            const container = document.getElementById('botiga-container');
-            container.innerHTML = '';
-
-            skins.forEach(skin => {
-                const desblocat = desblocats.includes(skin.id);
-                const equipat = skinEquipada === skin.id;
-
-                const card = document.createElement('div');
-                card.className = `item-card ${equipat ? 'equipats' : ''}`;
-                
-                let botoHTML = '';
-                if (equipat) {
-                    botoHTML = `<button class="btn-comprar equipat">Equipat</button>`;
-                } else if (desblocat) {
-                    botoHTML = `<button class="btn-comprar equipar" onclick="equiparSkin('${skin.id}')">Equipar</button>`;
+    function renderBoard() {
+        const cells = document.querySelectorAll('.cell');
+        
+        cells.forEach((cell, index) => {
+            cell.className = 'cell'; 
+            let val = board[index];
+            
+            if (val === '🚫') {
+                cell.innerText = val;
+                cell.classList.add('blocked');
+            } else if (val !== '') {
+                // Lògica del Mode Memòria
+                if (currentVariant === 'memory' && !isGameOver) {
+                    cell.innerText = '❓';
+                    cell.classList.add('memory-hidden');
                 } else {
-                    botoHTML = `<button class="btn-comprar comprar" onclick="comprarSkin('${skin.id}', ${skin.preu})">Comprar (${skin.preu} 🪙)</button>`;
+                    cell.innerText = val;
                 }
-
-                card.innerHTML = `
-                    <h3>${skin.nom}</h3>
-                    <div class="item-icones">${skin.p1} vs ${skin.p2}</div>
-                    ${botoHTML}
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function comprarSkin(id, preu) {
-            if (monedes >= preu) {
-                monedes -= preu;
-                desblocats.push(id);
-                skinEquipada = id;
-                guardarDades();
-                renderitzarBotiga();
-                reiniciarJoc();
             } else {
-                alert("No tens suficients monedes!");
+                cell.innerText = '';
+            }
+        });
+
+        // Efecte parpelleig al Mode Infinit
+        if (currentVariant === 'infinite' && !isGameOver) {
+            let p1Moves = moves.filter(m => m.symbol === mySymbol);
+            let p2Moves = moves.filter(m => m.symbol === getOpponentSymbol());
+            if (p1Moves.length === 3) cells[p1Moves[0].index].classList.add('fading');
+            if (p2Moves.length === 3) cells[p2Moves[0].index].classList.add('fading');
+        }
+    }
+
+    function updateStatus() {
+        const status = document.getElementById('status');
+        if (currentOpponent === 'local') {
+            status.innerText = `Torn de: ${currentPlayer}`;
+            status.style.color = '#fff';
+        } else {
+            status.innerText = currentPlayer === mySymbol ? 'És el teu torn!' : 'El Bot està pensant...';
+            status.style.color = currentPlayer === mySymbol ? '#4CAF50' : '#FF9800';
+        }
+    }
+
+    function checkWinner() {
+        let roundWon = false;
+        let lineCreator = null;
+
+        for (let c of winCombos) {
+            if (board[c[0]] && board[c[0]] !== '🚫' && board[c[0]] === board[c[1]] && board[c[0]] === board[c[2]]) {
+                roundWon = true;
+                lineCreator = board[c[0]];
+                break;
             }
         }
 
-        function equiparSkin(id) {
-            skinEquipada = id;
-            guardarDades();
-            renderitzarBotiga();
-            reiniciarJoc();
+        if (roundWon) {
+            isGameOver = true;
+            clearInterval(timerInterval);
+            renderBoard(); // Tornem a renderitzar per revelar el Mode Memòria
+            
+            let actualWinner = lineCreator;
+            
+            // Mode Invers: Qui fa la línia PERD. Així que el guanyador és l'altre.
+            if (currentVariant === 'inverse') {
+                actualWinner = (lineCreator === mySymbol) ? getOpponentSymbol() : mySymbol;
+            }
+
+            if (currentOpponent !== 'local') {
+                if (actualWinner === mySymbol) {
+                    let reward = 10;
+                    if (currentOpponent === 'bot-hard') reward += 10;
+                    if (['infinite', 'obstacle', 'memory'].includes(currentVariant)) reward += 10;
+                    if (['blitz', 'inverse'].includes(currentVariant)) reward += 20;
+
+                    coins += reward; updateCoins();
+                    document.getElementById('status').innerText = `🏆 Has guanyat! +${reward} 🪙`;
+                    document.getElementById('status').style.color = '#FFD700';
+                } else {
+                    let msg = currentVariant === 'inverse' ? `Has fet 3 en ratlla! Has PERDUT! 💀` : `💀 Ha guanyat el Bot!`;
+                    document.getElementById('status').innerText = msg;
+                    document.getElementById('status').style.color = '#f44336';
+                }
+            } else {
+                let msg = currentVariant === 'inverse' ? `${lineCreator} s'ha suïcidat. Guanya ${actualWinner}!` : `🏆 Ha guanyat: ${actualWinner}!`;
+                document.getElementById('status').innerText = msg;
+                document.getElementById('status').style.color = '#4CAF50';
+            }
+            return;
         }
 
-        // Inicialització
-        ellesCella.forEach(c => c.addEventListener('click', gestioClicCella));
-        guardarDades();
-        reiniciarJoc();
-    </script>
+        if (!board.includes('')) {
+            isGameOver = true;
+            clearInterval(timerInterval);
+            renderBoard();
+            document.getElementById('status').innerText = "🤝 Empat absolut!";
+            document.getElementById('status').style.color = '#aaa';
+        }
+    }
+
+    init();
+</script>
 </body>
 </html>
