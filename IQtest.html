@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IQ Test — Mesurador gratuït</title>
+<style>
+  :root{
+    --bg:#0b1020; --card:#11182c; --card2:#18213b; --text:#f4f7ff; --muted:#a9b4cf;
+    --accent:#6ea8fe; --accent2:#8b7cff; --ok:#45d483; --bad:#ff6577; --border:#2a3558;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:
+    radial-gradient(circle at 10% 0%,#202b55 0,transparent 35%),
+    radial-gradient(circle at 90% 0%,#38246b 0,transparent 30%),var(--bg);color:var(--text);min-height:100vh}
+  .wrap{max-width:900px;margin:0 auto;padding:24px}
+  .hero{text-align:center;padding:26px 10px 18px}
+  .hero h1{font-size:clamp(30px,5vw,52px);margin:0 0 8px}
+  .hero p{color:var(--muted);margin:0 auto;max-width:680px;line-height:1.55}
+  .card{background:rgba(17,24,44,.9);border:1px solid var(--border);border-radius:22px;
+    box-shadow:0 18px 50px rgba(0,0,0,.28);padding:24px}
+  .start-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+  label{display:block;color:var(--muted);font-size:14px;margin-bottom:7px}
+  input,select{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);
+    background:#0c1327;color:var(--text);font-size:16px;outline:none}
+  input:focus,select:focus{border-color:var(--accent)}
+  .btn{border:0;border-radius:13px;padding:13px 18px;font-size:16px;font-weight:800;cursor:pointer;
+    color:white;background:linear-gradient(135deg,var(--accent),var(--accent2));transition:.18s transform,.18s opacity}
+  .btn:hover{transform:translateY(-1px)} .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .tiny{font-size:12px;color:var(--muted);line-height:1.5}
+  .info{background:#0d152a;border:1px solid var(--border);padding:13px;border-radius:14px;color:var(--muted);font-size:13px}
+  .hidden{display:none!important}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .pill{background:#0d152a;border:1px solid var(--border);border-radius:999px;padding:8px 12px;color:var(--muted);font-size:13px}
+  .timer{font-variant-numeric:tabular-nums;font-weight:900;color:white}
+  .progress{height:10px;background:#0d1428;border-radius:999px;overflow:hidden;margin:12px 0 22px}
+  .bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .2s}
+  .qmeta{color:var(--muted);font-size:14px;margin-bottom:8px}
+  .question{font-size:26px;font-weight:850;line-height:1.25;margin:0 0 20px}
+  .subq{color:var(--muted);font-size:14px;margin:-10px 0 20px;line-height:1.5}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .answer{border:1px solid var(--border);background:var(--card2);padding:15px;border-radius:14px;
+    cursor:pointer;font-size:17px;text-align:left;color:var(--text);min-height:58px;transition:.15s}
+  .answer:hover{border-color:#5570b2;transform:translateY(-1px)}
+  .answer.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(110,168,254,.17) inset;background:#1c294a}
+  .answer.correct{border-color:var(--ok);background:rgba(69,212,131,.1)}
+  .answer.wrong{border-color:var(--bad);background:rgba(255,101,119,.08)}
+  .nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+  .nav .right{display:flex;gap:10px}
+  .result{text-align:center}
+  .score-ring{width:190px;height:190px;border-radius:50%;margin:18px auto;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) var(--pct),#202947 0);position:relative}
+  .score-ring:before{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--card)}
+  .score-ring > div{position:relative}
+  .iq{font-size:52px;font-weight:950}
+  .iqlabel{color:var(--muted);font-size:13px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
+  .stat{background:#0d152a;border:1px solid var(--border);border-radius:14px;padding:14px}
+  .stat b{display:block;font-size:23px;margin-bottom:3px}
+  .stat span{color:var(--muted);font-size:12px}
+  .note{text-align:left;margin-top:18px}
+  .review{margin-top:22px;text-align:left}
+  .review-item{border:1px solid var(--border);border-radius:15px;padding:15px;margin:9px 0;background:#0d152a}
+  .review-item strong{display:block;margin-bottom:7px}
+  .tag{display:inline-block;font-size:11px;padding:4px 8px;border-radius:999px;margin-bottom:7px;background:#1d2847;color:#bcd0ff}
+  @media (max-width:700px){
+    .start-grid,.answers,.stats{grid-template-columns:1fr}
+    .question{font-size:22px}
+    .wrap{padding:14px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>🧠 IQ Test</h1>
+    <p>Test gratuït amb 36 preguntes de diferents tipus. Fes-lo sense calculadora ni ajuda externa per obtenir una estimació més consistent.</p>
+  </section>
+
+  <section id="startCard" class="card">
+    <h2>Començar el test</h2>
+    <div class="start-grid">
+      <div>
+        <label for="name">Nom (opcional)</label>
+        <input id="name" maxlength="30" placeholder="Ex.: Martí">
+      </div>
+      <div>
+        <label for="timeMode">Temps</label>
+        <select id="timeMode">
+          <option value="1800">30 minuts — recomanat</option>
+          <option value="2700">45 minuts — relaxat</option>
+          <option value="1200">20 minuts — ràpid</option>
+        </select>
+      </div>
+    </div>
+    <div class="info">
+      <b>Important:</b> aquest resultat és una <b>estimació orientativa</b>, no un IQ clínic ni un diagnòstic.
+      Els tests d'IQ oficials es calibren amb mostres representatives i normes per edat. Aquesta app prioritza
+      consistència, varietat de preguntes i explicacions, però no pot afirmar una precisió psicomètrica professional.
+    </div>
+    <br>
+    <button class="btn" id="startBtn">Començar 🧠</button>
+    <p class="tiny">36 preguntes · 1 resposta per pregunta · sense compte · el resultat es calcula al dispositiu.</p>
+  </section>
+
+  <section id="testCard" class="card hidden">
+    <div class="topbar">
+      <div class="pill">Pregunta <span id="num">1</span>/36</div>
+      <div class="pill">⏱️ <span id="timer" class="timer">30:00</span></div>
+      <div class="pill">Punts: <span id="points">0</span></div>
+    </div>
+    <div class="progress"><div id="bar" class="bar"></div></div>
+    <div class="qmeta" id="category">Lògica</div>
+    <h2 id="question" class="question"></h2>
+    <div id="subq" class="subq"></div>
+    <div id="answers" class="answers"></div>
+    <div class="nav">
+      <button class="btn" id="prevBtn">← Anterior</button>
+      <div class="right">
+        <button class="btn" id="nextBtn">Següent →</button>
+        <button class="btn hidden" id="finishBtn">Acabar ✓</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultCard" class="card hidden result">
+    <h2>Resultat</h2>
+    <div id="greeting" class="tiny"></div>
+    <div class="score-ring" id="ring"><div><div class="iq" id="iq">100</div><div class="iqlabel">IQ estimat</div></div></div>
+    <div id="band" style="font-size:20px;font-weight:850"></div>
+    <p id="resultText" style="color:var(--muted);line-height:1.55"></p>
+    <div class="stats">
+      <div class="stat"><b id="raw">0/36</b><span>Encerts</span></div>
+      <div class="stat"><b id="pctile">50</b><span>Percentil estimat*</span></div>
+      <div class="stat"><b id="used">0:00</b><span>Temps utilitzat</span></div>
+      <div class="stat"><b id="speed">0%</b><span>Completat</span></div>
+    </div>
+    <div class="info note">
+      <b>* Sobre el percentil:</b> és una aproximació derivada de la puntuació de l'app, no un percentil
+      obtingut d'una norma psicomètrica publicada. Per a una mesura formal cal un test estandarditzat administrat
+      per un professional.
+    </div>
+    <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px">
+      <button class="btn" id="retryBtn">Tornar a fer-lo</button>
+      <button class="btn" id="reviewBtn">Veure respostes</button>
+    </div>
+    <div id="review" class="review hidden"></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const questions = [
+    {c:"Sèries numèriques", q:"Quin número continua? 2, 4, 8, 16, 32, ?", a:["48","56","64","72"], k:2, e:"Cada terme es multiplica per 2."},
+    {c:"Lògica", q:"Tots els blops són vermells. Alguns objectes vermells són petits. Quina conclusió és segura?", a:["Tots els blops són petits.","Alguns blops són petits.","Cap blop és petit.","No es pot saber si cap blop és petit."], k:3, e:"Només sabem que els blops són vermells; no sabem la seva mida."},
+    {c:"Patrons", q:"Quina figura falta?  ▲ ● ▲ ● ▲ ?", a:["▲","●","■","◆"], k:1, e:"El patró alterna triangle i cercle."},
+    {c:"Sèries numèriques", q:"3, 6, 11, 18, 27, ?", a:["36","38","40","42"], k:1, e:"Les diferències són +3, +5, +7, +9; després +11 → 38."},
+    {c:"Verbal", q:"Quina paraula no encaixa? llibre, revista, novel·la, bicicleta", a:["llibre","revista","novel·la","bicicleta"], k:3, e:"Les tres primeres són publicacions o obres escrites; bicicleta no."},
+    {c:"Lògica", q:"Si A > B i B > C, què és cert?", a:["A < C","A = C","A > C","No es pot saber"], k:2, e:"La relació > és transitiva."},
+    {c:"Matemàtiques", q:"Un número augmenta un 20% i passa a ser 60. Quin era el número inicial?", a:["45","48","50","52"], k:2, e:"60 ÷ 1,2 = 50."},
+    {c:"Sèries", q:"1, 1, 2, 3, 5, 8, ?", a:["11","12","13","15"], k:2, e:"Cada número és la suma dels dos anteriors."},
+    {c:"Espacial", q:"Un cub té 6 cares. Quantes arestes té?", a:["8","10","12","14"], k:2, e:"Un cub té 12 arestes."},
+    {c:"Lògica", q:"Si avui és dimecres, quin dia serà d'aquí 45 dies?", a:["divendres","dissabte","diumenge","dilluns"], k:1, e:"45 mod 7 = 3. Dimecres + 3 = dissabte."},
+    {c:"Sèries", q:"100, 50, 25, 12,5, ?", a:["6,25","7,5","8,25","10"], k:0, e:"Cada terme és la meitat de l'anterior."},
+    {c:"Verbal", q:"PEIX és a AIGUA com OCELL és a…", a:["niu","cel","arbre","ploma"], k:1, e:"La relació és l'entorn on es mou principalment."},
+    {c:"Lògica", q:"Cap X és Y. Tots els Z són X. Quina afirmació és segura?", a:["Cap Z és Y.","Tots els Y són Z.","Alguns Z són Y.","Tots els X són Z."], k:0, e:"Si Z ⊆ X i X ∩ Y = ∅, aleshores Z ∩ Y = ∅."},
+    {c:"Matemàtiques", q:"Si 4 màquines fan 4 peces en 4 minuts, quant tardaran 100 màquines a fer 100 peces?", a:["1 minut","4 minuts","25 minuts","100 minuts"], k:1, e:"Cada màquina fa 1 peça en 4 minuts; 100 màquines fan 100 peces en 4 minuts."},
+    {c:"Sèries", q:"5, 10, 20, 40, ?", a:["60","70","80","90"], k:2, e:"Es duplica cada vegada."},
+    {c:"Patrons", q:"Quina opció completa millor: AB, DE, GH, JK, ?", a:["LM","MN","NO","OP"], k:1, e:"Cada parella avança 3 lletres: AB → DE → GH → JK → MN."},
+    {c:"Lògica", q:"En una cursa, avances la persona que va segona. En quina posició quedes?", a:["primera","segona","tercera","quarta"], k:1, e:"Ocupes la posició de la persona que has avançat: segona."},
+    {c:"Matemàtiques", q:"Quin és el 15% de 200?", a:["20","25","30","35"], k:2, e:"0,15 × 200 = 30."},
+    {c:"Verbal", q:"Quin parell té la mateixa relació que MÀ és a GUANT?", a:["peu : sabata","cap : cabell","ull : llum","nas : aire"], k:0, e:"El guant es porta a la mà, com la sabata al peu."},
+    {c:"Sèries", q:"4, 7, 13, 25, 49, ?", a:["73","97","99","101"], k:1, e:"Multiplica per 2 i resta 1: 49×2−1 = 97."},
+    {c:"Espacial", q:"Si mires una fletxa ↑ i la gires 90° cap a la dreta, cap on apunta?", a:["←","→","↓","↑"], k:1, e:"Una rotació de 90° a la dreta transforma ↑ en →."},
+    {c:"Lògica", q:"Tres caixes estan etiquetades 'Pomes', 'Taronges' i 'Mixta', però totes les etiquetes són incorrectes. Traient una fruita d'una sola caixa, de quina caixa has de treure?", a:["Pomes","Taronges","Mixta","Qualsevol"], k:2, e:"La caixa 'Mixta' no pot ser mixta; la fruita que treguis revela el seu contingut."},
+    {c:"Sèries", q:"81, 27, 9, 3, ?", a:["0","1","2","6"], k:1, e:"Cada terme es divideix per 3."},
+    {c:"Verbal", q:"SINÒNIM de 'precís' (en el sentit de correcte/exacte):", a:["exacte","lent","fosc","ample"], k:0, e:"'Exacte' és sinònim de 'precís' en aquest context."},
+    {c:"Matemàtiques", q:"Un rectangle fa 8 cm × 5 cm. Quin és el seu perímetre?", a:["13 cm","26 cm","40 cm","80 cm"], k:1, e:"2×(8+5) = 26 cm."},
+    {c:"Lògica", q:"Si alguns A són B i tots els B són C, què podem assegurar?", a:["Alguns A són C.","Tots els A són C.","Cap A és C.","Tots els C són A."], k:0, e:"Els A que són B també són C."},
+    {c:"Sèries", q:"2, 6, 12, 20, 30, ?", a:["40","42","44","46"], k:1, e:"Suma +4,+6,+8,+10; després +12 → 42."},
+    {c:"Patrons", q:"Quina lletra segueix? Z, X, V, T, ?", a:["S","R","Q","P"], k:1, e:"Va baixant de 2 en 2 lletres."},
+    {c:"Matemàtiques", q:"Si x + 7 = 19, quant val x?", a:["10","11","12","13"], k:2, e:"19 − 7 = 12."},
+    {c:"Lògica", q:"Una família té 3 fills. Cada fill té 2 germanes. Quants fills té la família en total?", a:["3","4","5","6"], k:0, e:"Els 3 fills poden compartir les mateixes 2 germanes → 5 fills en total."},
+    {c:"Sèries", q:"7, 10, 16, 28, 52, ?", a:["76","88","100","104"], k:3, e:"Les diferències es dupliquen: +3,+6,+12,+24,+48 → 100. (Opció correcta seria 100.)"},
+    {c:"Verbal", q:"Quina paraula és més semblant a 'efímer'?", a:["etern","transitori","pesant","exacte"], k:1, e:"Efímer vol dir de poca durada, és a dir, transitori."},
+    {c:"Matemàtiques", q:"Si 3/4 d'un número són 18, quin és el número?", a:["21","24","27","30"], k:1, e:"18 ÷ 3 × 4 = 24."},
+    {c:"Lògica", q:"Quin número no segueix el patró? 8, 16, 24, 31, 40", a:["16","24","31","40"], k:2, e:"Els altres són múltiples de 8; 31 no ho és."},
+    {c:"Espacial", q:"Quantes cares té un prisma triangular?", a:["4","5","6","8"], k:1, e:"Té 2 triangles + 3 rectangles = 5 cares."},
+    {c:"Sèries", q:"1, 4, 9, 16, 25, ?", a:["30","32","36","49"], k:2, e:"Són quadrats perfectes: 1²,2²,3²,4²,5²,6² = 36."},
+  ];
+
+  // Correcte l'ítem 31: 100 és la resposta derivada.
+  questions[30] = {c:"Sèries", q:"7, 10, 16, 28, 52, ?", a:["76","88","100","104"], k:2, e:"Les diferències són +3,+6,+12,+24; la següent és +48 → 100."};
+
+  const state = {i:0, answers:Array(questions.length).fill(null), start:0, elapsed:0, remaining:1800, interval:null, submitted:false, answeredCount:0};
+  const $ = id => document.getElementById(id);
+
+  function formatTime(s){
+    s=Math.max(0,Math.floor(s));
+    return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  }
+
+  function start(){
+    state.i=0; state.answers=Array(questions.length).fill(null); state.start=Date.now();
+    state.remaining=Number($("timeMode").value); state.submitted=false;
+    $("startCard").classList.add("hidden"); $("resultCard").classList.add("hidden"); $("testCard").classList.remove("hidden");
+    state.interval=setInterval(() => {
+      state.remaining--;
+      $("timer").textContent=formatTime(state.remaining);
+      if(state.remaining<=0){ finish(); }
+    },1000);
+    render();
+  }
+
+  function render(){
+    const q=questions[state.i], selected=state.answers[state.i];
+    $("num").textContent=state.i+1; $("category").textContent=q.c; $("question").textContent=q.q;
+    $("subq").textContent="";
+    $("points").textContent=state.answers.filter((v,idx)=>v===questions[idx].k).length;
+    $("bar").style.width=((state.i+1)/questions.length*100)+"%";
+    $("answers").innerHTML="";
+    q.a.forEach((txt,n)=>{
+      const b=document.createElement("button"); b.className="answer"; b.textContent=txt;
+      if(selected===n)b.classList.add("selected");
+      b.addEventListener("click",()=>{state.answers[state.i]=n;render();});
+      $("answers").appendChild(b);
+    });
+    $("prevBtn").disabled=state.i===0;
+    if(state.i===questions.length-1){$("nextBtn").classList.add("hidden");$("finishBtn").classList.remove("hidden")}
+    else{$("nextBtn").classList.remove("hidden");$("finishBtn").classList.add("hidden")}
+  }
+
+  function next(){ if(state.i<questions.length-1){state.i++;render();window.scrollTo({top:0,behavior:"smooth"})} }
+  function prev(){ if(state.i>0){state.i--;render();window.scrollTo({top:0,behavior:"smooth"})} }
+
+  function finish(){
+    if(state.submitted)return;
+    state.submitted=true; clearInterval(state.interval);
+    state.elapsed=Math.round((Date.now()-state.start)/1000);
+    const correct=state.answers.filter((v,idx)=>v===questions[idx].k).length;
+    const answered=state.answers.filter(v=>v!==null).length;
+    // Transparent, non-clinical estimate: 40 points below average and 45 above.
+    // A smooth bounded mapping centers 18/36 around IQ 100.
+    let iq=Math.round(70 + (correct/36)*75);
+    iq=Math.max(70,Math.min(145,iq));
+    // approximate normal CDF, centered 100 with SD 15, used only as an illustrative percentile.
+    const z=(iq-100)/15;
+    const percentile=Math.max(1,Math.min(99,Math.round(100*(0.5*(1+erf(z/Math.SQRT2))))));
+    const pct=Math.round(((iq-70)/75)*100);
+    $("testCard").classList.add("hidden"); $("resultCard").classList.remove("hidden");
+    $("greeting").textContent=($("name").value.trim()?$("name").value.trim()+", ":"")+"aquest és el teu resultat.";
+    $("iq").textContent=iq;
+    $("ring").style.setProperty("--pct",pct+"%");
+    $("raw").textContent=correct+"/36";
+    $("pctile").textContent=percentile;
+    $("used").textContent=formatTime(state.elapsed);
+    $("speed").textContent=Math.round(answered/questions.length*100)+"%";
+    $("band").textContent=bandFor(iq);
+    $("resultText").textContent=resultDescription(iq,correct);
+    $("review").classList.add("hidden");
+  }
+
+  function erf(x){
+    const sign=x<0?-1:1; x=Math.abs(x);
+    const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+    const t=1/(1+p*x);
+    const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+    return sign*y;
+  }
+  function bandFor(iq){
+    if(iq<85)return "Resultat baix — orientatiu";
+    if(iq<100)return "Per sota de la mitjana — orientatiu";
+    if(iq<115)return "Franja mitjana — orientatiu";
+    if(iq<130)return "Per sobre de la mitjana — orientatiu";
+    return "Franja alta — orientatiu";
+  }
+  function resultDescription(iq,correct){
+    return `Has encertat ${correct} de 36 preguntes. Aquesta app transforma l'encert en una estimació aproximada amb una escala centrada en 100 i limitada a 70–145. No està calibrada amb una mostra normativa real, així que no s'ha d'interpretar com el resultat d'un WAIS, WISC o altre test estandarditzat.`;
+  }
+
+  function reviewAnswers(){
+    const box=$("review"); box.classList.toggle("hidden");
+    if(!box.classList.contains("hidden")){
+      box.innerHTML="<h3>Revisió de respostes</h3>";
+      questions.forEach((q,idx)=>{
+        const val=state.answers[idx];
+        const ok=val===q.k;
+        const div=document.createElement("div");div.className="review-item";
+        const your=val===null?"Sense resposta":q.a[val];
+        div.innerHTML=`<span class="tag">${q.c}</span><strong>${idx+1}. ${q.q}</strong>
+          <div>La teva resposta: <b>${your}</b> ${ok?"✅":"❌"}</div>
+          <div>Correcta: <b>${q.a[q.k]}</b></div>
+          <div class="tiny" style="margin-top:6px">${q.e}</div>`;
+        box.appendChild(div);
+      });
+    }
+  }
+
+  $("startBtn").addEventListener("click",start);
+  $("nextBtn").addEventListener("click",next);
+  $("prevBtn").addEventListener("click",prev);
+  $("finishBtn").addEventListener("click",finish);
+  $("retryBtn").addEventListener("click",()=>location.reload());
+  $("reviewBtn").addEventListener("click",reviewAnswers);
+})();
+</script>
+</body>
+</html>
