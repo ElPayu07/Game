@@ -3,1048 +3,506 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Turbo Road🏁</title>
-
+<title>Turbo Road</title>
 <style>
-:root {
-  --bg: #090b12;
-  --panel: #111522;
-  --text: #f7f7fb;
-  --muted: #aab0c0;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    radial-gradient(circle at 50% 0%, #1b2440, #090b12 48%, #05060a);
-  font-family: Arial, Helvetica, sans-serif;
-  color: var(--text);
-  overflow: auto;
-  padding: 15px;
-}
-
-.wrap {
-  width: min(1200px, 96vw);
-  display: grid;
-  grid-template-columns: 1fr 290px;
-  gap: 18px;
-}
-
-.game-card,
-.side {
-  background: rgba(17, 21, 34, .94);
-  border: 1px solid rgba(255,255,255,.09);
-  border-radius: 22px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
-}
-
-.game-card {
-  padding: 14px;
-}
-
-#game {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  min-height: 500px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #30333a;
-}
-
-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.hud {
-  position: absolute;
-  left: 14px;
-  top: 14px;
-  display: flex;
-  gap: 9px;
-  flex-wrap: wrap;
-  z-index: 3;
-  pointer-events: none;
-}
-
-.pill {
-  padding: 8px 11px;
-  border-radius: 12px;
-  background: rgba(7,9,16,.75);
-  border: 1px solid rgba(255,255,255,.1);
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.side {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-h1 {
-  font-size: 28px;
-  margin: 0 0 5px;
-}
-
-.subtitle {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.stat {
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.07);
-}
-
-.stat b {
-  font-size: 24px;
-}
-
-.hint {
-  font-size: 13px;
-  color: var(--muted);
-  line-height: 1.55;
-}
-
-button {
-  border: 0;
-  border-radius: 14px;
-  padding: 13px 15px;
-  font-weight: 800;
-  font-size: 15px;
-  cursor: pointer;
-  background: linear-gradient(135deg,#00d9ff,#4766ff);
-  color: white;
-  box-shadow: 0 10px 25px rgba(36,119,255,.25);
-  transition: .18s transform, .18s filter;
-}
-
-button:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
-}
-
-button:active {
-  transform: translateY(1px);
-}
-
-.shop {
-  border-top: 1px solid rgba(255,255,255,.1);
-  padding-top: 15px;
-}
-
-.shop h2 {
-  font-size: 20px;
-  margin: 0 0 10px;
-}
-
-.car-item {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  padding: 10px;
-  margin-bottom: 9px;
-}
-
-.car-preview {
-  height: 34px;
-  border-radius: 9px;
-  margin-bottom: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-}
-
-.car-item strong {
-  display: block;
-  margin-bottom: 3px;
-}
-
-.car-item small {
-  color: var(--muted);
-}
-
-.car-item button {
-  width: 100%;
-  margin-top: 8px;
-  padding: 9px;
-  font-size: 13px;
-}
-
-.car-item button:disabled {
-  cursor: not-allowed;
-  opacity: .5;
-  transform: none;
-}
-
-#overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: rgba(3,5,10,.7);
-  backdrop-filter: blur(5px);
-}
-
-.modal {
-  width: min(80%,420px);
-  text-align: center;
-  background: rgba(15,19,31,.97);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 22px;
-  padding: 28px;
-}
-
-.modal h2 {
-  margin: 0 0 10px;
-  font-size: 34px;
-}
-
-.modal p {
-  color: var(--muted);
-}
-
-#count {
-  position: absolute;
-  left: 50%;
-  top: 48%;
-  transform: translate(-50%,-50%);
-  font-size: 84px;
-  font-weight: 900;
-  text-shadow: 0 8px 30px rgba(0,0,0,.4);
-  z-index: 4;
-  display: none;
-  pointer-events: none;
-}
-
-@media(max-width:850px) {
-  .wrap {
-    grid-template-columns: 1fr;
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    user-select: none;
   }
 
-  #game {
-    min-height: 0;
+  body {
+    background-color: #0d0e12;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
   }
 
-  .side {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  #game-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 100vh;
+    max-height: 800px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);
+    background: #1e232a;
   }
 
-  .side > * {
-    grid-column: 1 / -1;
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
-}
+
+  /* Indicadors de control superior */
+  #ui {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+    z-index: 10;
+    pointer-events: none;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    background: rgba(18, 20, 26, 0.9);
+    color: #ffffff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  .badge-icon {
+    font-style: normal;
+  }
+
+  #game-over {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 12, 16, 0.92);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #ffffff;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  #game-over.hidden {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #game-over h1 {
+    font-size: 38px;
+    font-weight: 800;
+    color: #ff4757;
+    margin-bottom: 12px;
+    text-shadow: 0 0 20px rgba(255, 71, 87, 0.4);
+  }
+
+  #game-over p {
+    font-size: 20px;
+    margin-bottom: 28px;
+    color: #e1e2e6;
+  }
+
+  #game-over button {
+    padding: 14px 36px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    background: #00d2ff;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+    transition: all 0.2s ease;
+  }
+
+  #game-over button:hover {
+    transform: translateY(-2px) scale(1.05);
+    background: #38ef7d;
+    box-shadow: 0 0 25px rgba(56, 239, 125, 0.5);
+  }
+
+  /* Instruccions tàctils / Controls */
+  #controls-hint {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 5;
+  }
 </style>
 </head>
-
 <body>
 
-<div class="wrap">
+<div id="game-wrapper">
+  <!-- Marcador de puntuació i velocitat -->
+  <div id="ui">
+    <div class="badge"><span class="badge-icon">❖</span> Punts: <span id="score">0</span></div>
+    <div class="badge"><span class="badge-icon">⚡</span> Velocitat: <span id="speed">1.0x</span></div>
+    <div class="badge"><span class="badge-icon">🏆</span> Rècord: <span id="record">0</span></div>
+  </div>
 
-  <section class="game-card">
-    <div id="game">
+  <!-- Pantalla de Fi de partida -->
+  <div id="game-over" class="hidden">
+    <h1>Fi de la partida!</h1>
+    <p>Puntuació: <span id="final-score">0</span></p>
+    <button onclick="restartGame()">Tornar a jugar</button>
+  </div>
 
-      <canvas id="canvas"></canvas>
+  <!-- Pista visual de controls -->
+  <div id="controls-hint">Fletxes / A-D / Toca esquerra o dreta per canviar de carril</div>
 
-      <div class="hud">
-        <div class="pill">🏁 Punts: <span id="score">0</span></div>
-        <div class="pill">⚡ Velocitat: <span id="speed">1.0x</span></div>
-        <div class="pill">💰 Monedes: <span id="coins">0</span></div>
-        <div class="pill">🏆 Rècord: <span id="best">0</span></div>
-      </div>
-
-      <div id="count"></div>
-
-      <div id="overlay">
-        <div class="modal">
-          <h2>💥 Crash!</h2>
-          <p>Has fet <b id="finalScore">0</b> punts.</p>
-          <p>💰 Monedes guanyades: <b id="earnedCoins">0</b></p>
-          <p id="newBest" style="display:none;color:#65f0a0;font-weight:800">
-            🎉 NOU RÈCORD!
-          </p>
-          <button id="restart">Tornar a córrer</button>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <aside class="side">
-
-    <div>
-      <h1>🏁 Turbo Road</h1>
-      <div class="subtitle">
-        Esquiva els cotxes, canvia de carril i compra vehicles nous.
-      </div>
-    </div>
-
-    <div class="stat">
-      🏁 Punts<br>
-      <b id="sideScore">0</b>
-    </div>
-
-    <div class="stat">
-      💰 Monedes<br>
-      <b id="sideCoins">0</b>
-    </div>
-
-    <div class="stat">
-      🏆 Millor puntuació<br>
-      <b id="sideBest">0</b>
-    </div>
-
-    <div class="hint">
-      <b>Controls</b><br>
-      ← → o A / D per canviar de carril.<br>
-      <br>
-      🛣️ Només hi ha 3 carrils.
-    </div>
-
-    <button id="start">▶ Començar carrera</button>
-
-    <div class="shop">
-      <h2>🛒 Botiga de cotxes</h2>
-      <div id="shopList"></div>
-    </div>
-
-  </aside>
-
+  <canvas id="gameCanvas" width="600" height="800"></canvas>
 </div>
 
 <script>
-(() => {
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const gameEl = document.getElementById('game');
+const scoreEl = document.getElementById('score');
+const speedEl = document.getElementById('speed');
+const recordEl = document.getElementById('record');
+const gameOverEl = document.getElementById('game-over');
+const finalScoreEl = document.getElementById('final-score');
 
-  let W = 0;
-  let H = 0;
-  let dpr = 1;
+// Carregar récord guardat
+let record = parseInt(localStorage.getItem('carGame_record_v2') || '0', 10);
+recordEl.textContent = record;
 
-  function resize() {
-    const r = gameEl.getBoundingClientRect();
+// Paràmetres principals del joc
+let gameRunning = true;
+let score = 0;
+let baseSpeed = 7;
+let speedMultiplier = 1.0;
+let currentSpeed = baseSpeed;
+let roadOffset = 0;
 
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
+// Geometria de la carretera (3 Carrils)
+const roadX = 120;
+const roadWidth = 360;
+const numLanes = 3;
+const laneWidth = roadWidth / numLanes; // 120px per carril
 
-    W = r.width;
-    H = r.height;
+// Funció per calcular la posició X exacta segons el carril (0, 1, 2)
+function getLaneX(laneIndex, itemWidth) {
+  return roadX + (laneIndex * laneWidth) + (laneWidth - itemWidth) / 2;
+}
 
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
+let currentLane = 1; // 0 = Esquerra, 1 = Centre, 2 = Dreta
 
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
+const player = {
+  width: 48,
+  height: 84,
+  x: getLaneX(1, 48), // Comença al carril del centre
+  targetX: getLaneX(1, 48),
+  y: 450, // POSICIÓ UBICADA MÉS AMUNT A LA PANTALLA (Y = 450)
+  color: '#00d2ff'
+};
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+// Enemics i pluja
+let enemies = [];
+let enemyTimer = 0;
 
-    laneX();
+const rain = Array.from({ length: 60 }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  length: 14 + Math.random() * 12,
+  speed: 16 + Math.random() * 8
+}));
 
-    if (player) {
-      updatePlayerLane();
-    }
+function moveLeft() {
+  if (currentLane > 0) {
+    currentLane--;
+    player.targetX = getLaneX(currentLane, player.width);
   }
+}
 
-  window.addEventListener('resize', resize);
+function moveRight() {
+  if (currentLane < 2) {
+    currentLane++;
+    player.targetX = getLaneX(currentLane, player.width);
+  }
+}
 
-  const scoreEl = document.getElementById('score');
-  const sideScore = document.getElementById('sideScore');
-  const speedEl = document.getElementById('speed');
-  const bestEl = document.getElementById('best');
-  const sideBest = document.getElementById('sideBest');
-  const coinsEl = document.getElementById('coins');
-  const sideCoins = document.getElementById('sideCoins');
+// Controls de teclat (canvi estricte de carril amb un toc)
+window.addEventListener('keydown', (e) => {
+  if (!gameRunning) return;
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+    moveLeft();
+  } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+    moveRight();
+  }
+});
 
-  const overlay = document.getElementById('overlay');
-  const countEl = document.getElementById('count');
-  const finalScore = document.getElementById('finalScore');
-  const earnedCoinsEl = document.getElementById('earnedCoins');
-  const newBest = document.getElementById('newBest');
+// Controls tàctils / Click (Meitat esquerra o dreta de la pantalla)
+canvas.addEventListener('touchstart', (e) => {
+  if (!gameRunning) return;
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const touchX = e.touches[0].clientX - rect.left;
+  if (touchX < rect.width / 2) {
+    moveLeft();
+  } else {
+    moveRight();
+  }
+}, { passive: false });
 
-  const keys = {};
+canvas.addEventListener('mousedown', (e) => {
+  if (!gameRunning) return;
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  if (clickX < rect.width / 2) {
+    moveLeft();
+  } else {
+    moveRight();
+  }
+});
 
-  addEventListener('keydown', e => {
-    keys[e.key.toLowerCase()] = true;
+function spawnEnemy() {
+  // Tria un carril a l'atzar
+  const lane = Math.floor(Math.random() * numLanes);
+  const enemyWidth = 48;
+  const enemyX = getLaneX(lane, enemyWidth);
 
-    if (['ArrowLeft','ArrowRight',' '].includes(e.key)) {
-      e.preventDefault();
-    }
+  // Evita generar dos cotxes en la mateixa posició
+  const isOccupied = enemies.some(e => e.y < 120 && Math.abs(e.x - enemyX) < 10);
+  if (isOccupied) return;
 
-    if (e.key === ' ' && !running && !counting) {
-      startGame();
-    }
+  const colors = ['#ff4757', '#ffa502', '#2ed573', '#eccc68', '#9b59b6'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
+
+  enemies.push({
+    x: enemyX,
+    y: -100,
+    width: enemyWidth,
+    height: 84,
+    color: color,
+    lane: lane
   });
+}
 
-  addEventListener('keyup', e => {
-    keys[e.key.toLowerCase()] = false;
-  });
-
-  const road = {
-    x: 0,
-    w: 0,
-    left: 0,
-    right: 0,
-    laneW: 0
-  };
-
-  function laneX() {
-    road.w = W * 0.56;
-    road.x = (W - road.w) / 2;
-    road.left = road.x;
-    road.right = road.x + road.w;
-    road.laneW = road.w / 3;
+function drawEnvironment() {
+  // Fons de gespa amb franges alternades
+  const stripeHeight = 40;
+  for (let y = 0; y < canvas.height; y += stripeHeight) {
+    const isDark = (Math.floor((y - roadOffset) / stripeHeight) % 2 === 0);
+    ctx.fillStyle = isDark ? '#3b7d48' : '#438a50';
+    ctx.fillRect(0, y, canvas.width, stripeHeight + 1);
   }
 
-  // =========================
-  // BOTIGA
-  // =========================
+  // Carretera d'asfalt fosc
+  ctx.fillStyle = '#2c3038';
+  ctx.fillRect(roadX, 0, roadWidth, canvas.height);
 
-  const cars = [
-    {
-      id: 'basic',
-      name: 'Street Blue',
-      color: '#26d9ff',
-      price: 0,
-      speed: 1,
-      control: 1,
-      emoji: '🔵'
-    },
-    {
-      id: 'red',
-      name: 'Red Rocket',
-      color: '#ff405e',
-      price: 100,
-      speed: 1.15,
-      control: 1,
-      emoji: '🔴'
-    },
-    {
-      id: 'gold',
-      name: 'Golden GT',
-      color: '#ffd23f',
-      price: 250,
-      speed: 1.3,
-      control: 1.05,
-      emoji: '🟡'
-    },
-    {
-      id: 'purple',
-      name: 'Neon Phantom',
-      color: '#a970ff',
-      price: 500,
-      speed: 1.5,
-      control: 1.12,
-      emoji: '🟣'
-    },
-    {
-      id: 'green',
-      name: 'Emerald X',
-      color: '#5ff0a0',
-      price: 900,
-      speed: 1.75,
-      control: 1.2,
-      emoji: '🟢'
-    }
-  ];
+  // Pianos verticals (Vermell i Blanc) als vorals
+  const curbWidth = 14;
+  const curbStripe = 28;
+  for (let y = -curbStripe * 2; y < canvas.height + curbStripe; y += curbStripe) {
+    const drawY = y + (roadOffset % curbStripe);
+    const isRed = (Math.floor((y - roadOffset) / curbStripe) % 2 === 0);
+    ctx.fillStyle = isRed ? '#e74c3c' : '#ffffff';
 
-  let owned = JSON.parse(
-    localStorage.getItem('turboOwned') || '["basic"]'
-  );
-
-  let selected = localStorage.getItem('turboSelected') || 'basic';
-  let coins = Number(localStorage.getItem('turboCoins') || 0);
-  let best = Number(localStorage.getItem('turboRoadBest') || 0);
-
-  function saveShop() {
-    localStorage.setItem('turboOwned', JSON.stringify(owned));
-    localStorage.setItem('turboSelected', selected);
-    localStorage.setItem('turboCoins', coins);
+    // Vora esquerra i dreta
+    ctx.fillRect(roadX - curbWidth, drawY, curbWidth, curbStripe);
+    ctx.fillRect(roadX + roadWidth, drawY, curbWidth, curbStripe);
   }
 
-  function renderShop() {
-    const list = document.getElementById('shopList');
-    list.innerHTML = '';
+  // Línies discontínues que separen els 3 carrils
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 4;
+  ctx.setLineDash([36, 24]);
+  ctx.lineDashOffset = -roadOffset;
 
-    cars.forEach(car => {
-      const isOwned = owned.includes(car.id);
-      const isSelected = selected === car.id;
-
-      const item = document.createElement('div');
-      item.className = 'car-item';
-
-      item.innerHTML = `
-        <div class="car-preview" style="background:${car.color}22">
-          ${car.emoji}
-        </div>
-        <strong>${car.name}</strong>
-        <small>
-          ⚡ Velocitat: ${car.speed}x<br>
-          🎮 Control: ${car.control}x
-        </small>
-      `;
-
-      const btn = document.createElement('button');
-
-      if (isSelected) {
-        btn.textContent = '✅ Seleccionat';
-        btn.disabled = true;
-      } else if (isOwned) {
-        btn.textContent = '🚗 Seleccionar';
-
-        btn.onclick = () => {
-          selected = car.id;
-          saveShop();
-          renderShop();
-        };
-      } else {
-        btn.textContent = `💰 Comprar (${car.price})`;
-        btn.disabled = coins < car.price;
-
-        btn.onclick = () => {
-          if (coins >= car.price) {
-            coins -= car.price;
-            owned.push(car.id);
-            selected = car.id;
-            saveShop();
-            updateUI();
-            renderShop();
-          }
-        };
-      }
-
-      item.appendChild(btn);
-      list.appendChild(item);
-    });
-  }
-
-  function selectedCar() {
-    return cars.find(c => c.id === selected) || cars[0];
-  }
-
-  // =========================
-  // JOC
-  // =========================
-
-  let player;
-  let traffic = [];
-  let particles = [];
-
-  let running = false;
-  let counting = false;
-  let last = 0;
-
-  let score = 0;
-  let difficulty = 1;
-  let spawnTimer = 0;
-  let stripeOffset = 0;
-  let shake = 0;
-
-  // Sistema de 3 carrils
-  let currentLane = 1;
-  let targetLane = 1;
-  let laneCooldown = 0;
-
-  function reset() {
-    const car = selectedCar();
-
-    currentLane = 1;
-    targetLane = 1;
-    laneCooldown = 0;
-
-    player = {
-      w: 38,
-      h: 70,
-      x: 0,
-      y: H - 110,
-      targetX: 0,
-      color: car.color,
-      tilt: 0,
-      speedMultiplier: car.speed,
-      controlMultiplier: car.control
-    };
-
-    traffic = [];
-    particles = [];
-
-    score = 0;
-    difficulty = 1;
-    spawnTimer = .4;
-    stripeOffset = 0;
-    shake = 0;
-
-    updatePlayerLane();
-    updateUI();
-  }
-
-  // Col·loca el cotxe exactament al centre del carril
-  function updatePlayerLane() {
-    if (!player) return;
-
-    const laneCenter =
-      road.left +
-      targetLane * road.laneW +
-      road.laneW / 2;
-
-    player.targetX = laneCenter - player.w / 2;
-  }
-
-  function updateUI() {
-    const s = Math.floor(score);
-
-    scoreEl.textContent = s;
-    sideScore.textContent = s;
-
-    coinsEl.textContent = coins;
-    sideCoins.textContent = coins;
-
-    bestEl.textContent = best;
-    sideBest.textContent = best;
-
-    speedEl.textContent = difficulty.toFixed(1) + 'x';
-  }
-
-  function startGame() {
-    overlay.style.display = 'none';
-
-    reset();
-
-    counting = true;
-    countEl.style.display = 'block';
-
-    let n = 3;
-    countEl.textContent = n;
-
-    const timer = setInterval(() => {
-      n--;
-
-      if (n > 0) {
-        countEl.textContent = n;
-      } else {
-        clearInterval(timer);
-
-        countEl.textContent = 'GO!';
-
-        setTimeout(() => {
-          countEl.style.display = 'none';
-          counting = false;
-          running = true;
-          last = performance.now();
-          requestAnimationFrame(loop);
-        }, 350);
-      }
-    }, 650);
-  }
-
-  function endGame() {
-    running = false;
-    shake = 14;
-
-    const final = Math.floor(score);
-    const earned = Math.max(1, Math.floor(final / 20));
-
-    coins += earned;
-    saveShop();
-    updateUI();
-
-    finalScore.textContent = final;
-    earnedCoinsEl.textContent = earned;
-
-    const isNew = final > best;
-
-    if (isNew) {
-      best = final;
-      localStorage.setItem('turboRoadBest', best);
-      bestEl.textContent = best;
-      sideBest.textContent = best;
-    }
-
-    newBest.style.display = isNew ? 'block' : 'none';
-    overlay.style.display = 'flex';
-
-    renderShop();
-  }
-
-  function spawnTraffic() {
-    const lane = Math.floor(Math.random() * 3);
-
-    const colors = [
-      '#ff4d6d',
-      '#ffd23f',
-      '#a970ff',
-      '#5ff0a0',
-      '#ff8a3d'
-    ];
-
-    const w = 36;
-    const h = 68;
-
-    const x =
-      road.left +
-      lane * road.laneW +
-      road.laneW / 2 -
-      w / 2;
-
-    const fast = Math.random() < Math.min(.22, difficulty / 22);
-
-    traffic.push({
-      x,
-      y: -90,
-      w,
-      h,
-      speed: (260 + Math.random() * 85) * (fast ? 1.18 : 1),
-      color: colors[(Math.random() * colors.length) | 0],
-      lane,
-      drift: (Math.random() - .5) * 8,
-      passed: false
-    });
-  }
-
-  function emit(x, y, n = 8, color = '#fff') {
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * Math.PI * 2;
-      const sp = 40 + Math.random() * 140;
-
-      particles.push({
-        x,
-        y,
-        vx: Math.cos(a) * sp,
-        vy: Math.sin(a) * sp,
-        r: 2 + Math.random() * 3,
-        life: .35 + Math.random() * .45,
-        color
-      });
-    }
-  }
-
-  function roundRect(x, y, w, h, r) {
+  for (let i = 1; i < numLanes; i++) {
+    const x = roadX + i * laneWidth;
     ctx.beginPath();
-    ctx.roundRect(x, y, w, h, r);
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+
+function drawCar(x, y, width, height, color, isPlayer = false) {
+  ctx.save();
+
+  // Efecte de resplendor cian exclusiu pel jugador
+  if (isPlayer) {
+    ctx.shadowColor = '#00d2ff';
+    ctx.shadowBlur = 18;
   }
 
-  function car(c, isPlayer = false) {
-    ctx.save();
+  // Chasis del cotxe
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, 10);
+  ctx.fill();
 
-    ctx.translate(c.x + c.w / 2, c.y + c.h / 2);
+  ctx.shadowBlur = 0; // Desactivar resplendor per als detalls interiors
 
-    if (isPlayer) {
-      ctx.rotate(c.tilt);
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = c.color;
+  // Pneumàtics
+  ctx.fillStyle = '#141414';
+  ctx.fillRect(x - 3, y + 12, 5, 16);
+  ctx.fillRect(x + width - 2, y + 12, 5, 16);
+  ctx.fillRect(x - 3, y + height - 28, 5, 16);
+  ctx.fillRect(x + width - 2, y + height - 28, 5, 16);
+
+  // Parabrisa / Cristalls
+  ctx.fillStyle = '#19222d';
+  ctx.beginPath();
+  ctx.roundRect(x + 5, y + 22, width - 10, 32, 6);
+  ctx.fill();
+
+  // Techo
+  ctx.fillStyle = color;
+  ctx.fillRect(x + 7, y + 36, width - 14, 11);
+
+  // Llums davanteres (groga)
+  ctx.fillStyle = '#fffb96';
+  ctx.fillRect(x + 5, y + 3, 9, 4);
+  ctx.fillRect(x + width - 14, y + 3, 9, 4);
+
+  // Llums posteriors (roig)
+  ctx.fillStyle = '#ff3838';
+  ctx.fillRect(x + 5, y + height - 7, 9, 4);
+  ctx.fillRect(x + width - 14, y + height - 7, 9, 4);
+
+  ctx.restore();
+}
+
+function drawRain() {
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  rain.forEach(p => {
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x, p.y + p.length);
+    p.y += p.speed;
+    if (p.y > canvas.height) {
+      p.y = -p.length;
+      p.x = Math.random() * canvas.width;
     }
+  });
+  ctx.stroke();
+}
 
-    ctx.translate(-c.w / 2, -c.h / 2);
+function checkCollision(rect1, rect2) {
+  return !(
+    rect1.x + rect1.width - 6 < rect2.x + 6 ||
+    rect1.x + 6 > rect2.x + rect2.width - 6 ||
+    rect1.y + rect1.height - 6 < rect2.y + 6 ||
+    rect1.y + 6 > rect2.y + rect2.height - 6
+  );
+}
 
-    roundRect(0, 0, c.w, c.h, 11);
-    ctx.fillStyle = c.color;
-    ctx.fill();
+function update() {
+  if (!gameRunning) return;
 
-    ctx.shadowBlur = 0;
+  // Puntuació i augment progressiu de velocitat
+  score++;
+  speedMultiplier = (1 + score / 500).toFixed(1);
+  currentSpeed = baseSpeed * parseFloat(speedMultiplier);
 
-    // Finestres
-    ctx.fillStyle = '#132033';
-    roundRect(7, 10, c.w - 14, 21, 7);
-    ctx.fill();
+  scoreEl.textContent = score;
+  speedEl.textContent = speedMultiplier + 'x';
 
-    ctx.fillStyle = 'rgba(255,255,255,.15)';
-    roundRect(9, 12, c.w - 18, 8, 4);
-    ctx.fill();
+  // Desplaçament de la carretera
+  roadOffset += currentSpeed;
 
-    // Franja
-    ctx.fillStyle = 'rgba(255,255,255,.22)';
-    roundRect(c.w / 2 - 3, 32, 6, 25, 3);
-    ctx.fill();
+  // Moviment suau i automàtic del jugador cap al carril objectiu (Lerp)
+  // Això garanteix que mai es quedi aturat entre dos carrils!
+  player.x += (player.targetX - player.x) * 0.28;
 
-    // Llums
-    ctx.fillStyle = '#fff3b0';
-    roundRect(5, 5, 9, 5, 2);
-    ctx.fill();
-
-    roundRect(c.w - 14, 5, 9, 5, 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#ff3f58';
-    roundRect(5, c.h - 10, 9, 5, 2);
-    ctx.fill();
-
-    roundRect(c.w - 14, c.h - 10, 9, 5, 2);
-    ctx.fill();
-
-    // Rodes
-    ctx.fillStyle = '#101116';
-
-    roundRect(-4, 13, 7, 17, 3);
-    ctx.fill();
-
-    roundRect(c.w - 3, 13, 7, 17, 3);
-    ctx.fill();
-
-    roundRect(-4, c.h - 30, 7, 17, 3);
-    ctx.fill();
-
-    roundRect(c.w - 3, c.h - 30, 7, 17, 3);
-    ctx.fill();
-
-    ctx.restore();
+  // Generació d'enemics
+  enemyTimer++;
+  if (enemyTimer > Math.max(22, 75 - Math.floor(score / 35))) {
+    spawnEnemy();
+    enemyTimer = 0;
   }
 
-  function drawRoad() {
-    // Gespa
-    ctx.fillStyle = '#3b7e40';
-    ctx.fillRect(0, 0, W, H);
+  // Actualització dels cotxes enemics
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    let enemy = enemies[i];
+    enemy.y += currentSpeed - 1.5;
 
-    const grassShift = (stripeOffset * .55) % 100;
-
-    for (let y = -100 + grassShift; y < H + 100; y += 100) {
-      ctx.fillStyle = 'rgba(255,255,255,.035)';
-      ctx.fillRect(0, y, W, 38);
-      ctx.fillRect(0, y + 52, W, 14);
+    // Comprovar col·lisió
+    if (checkCollision(player, enemy)) {
+      endGame();
+      return;
     }
 
-    // Carretera
-    ctx.fillStyle = '#30333a';
-    ctx.fillRect(road.x, 0, road.w, H);
-
-    // Vorals
-    const seg = 28;
-    const off = stripeOffset % seg;
-
-    for (let y = -seg + off; y < H + seg; y += seg) {
-      ctx.fillStyle =
-        (Math.floor((y - off) / seg) % 2 === 0)
-          ? '#ffffff'
-          : '#e84d5f';
-
-      ctx.fillRect(road.left - 9, y, 9, seg);
-      ctx.fillRect(road.right, y, 9, seg);
-    }
-
-    // Línies de carril
-    ctx.fillStyle = 'rgba(255,255,255,.88)';
-
-    for (let lane = 1; lane < 3; lane++) {
-      const x = road.left + road.laneW * lane - 2;
-
-      for (let y = -60 + stripeOffset % 78; y < H + 60; y += 78) {
-        ctx.fillRect(x, y, 4, 46);
-      }
-    }
-
-    // Brillantor
-    const grd = ctx.createLinearGradient(
-      road.left, 0,
-      road.right, 0
-    );
-
-    grd.addColorStop(0, 'rgba(255,255,255,0)');
-    grd.addColorStop(.5, 'rgba(255,255,255,.05)');
-    grd.addColorStop(1, 'rgba(255,255,255,0)');
-
-    ctx.fillStyle = grd;
-    ctx.fillRect(road.left, 0, road.w, H);
-
-    // Ratlles de velocitat
-    if (running) {
-      ctx.globalAlpha = .15;
-
-      for (let i = 0; i < 18; i++) {
-        const x = road.left + Math.random() * road.w;
-        const y = Math.random() * H;
-
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(x, y, 1, 8 + Math.random() * 18);
-      }
-
-      ctx.globalAlpha = 1;
+    // Eliminar enemics quan surten de la pantalla
+    if (enemy.y > canvas.height + 120) {
+      enemies.splice(i, 1);
     }
   }
+}
 
-  function collide(a, b) {
-    return (
-      a.x + 6 < b.x + b.w - 6 &&
-      a.x + a.w - 6 > b.x + 6 &&
-      a.y + 8 < b.y + b.h - 8 &&
-      a.y + a.h - 8 > b.y + 8
-    );
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 1. Dibuixar entorn i carretera
+  drawEnvironment();
+
+  // 2. Dibuixar cotxes enemics
+  enemies.forEach(enemy => {
+    drawCar(enemy.x, enemy.y, enemy.width, enemy.height, enemy.color, false);
+  });
+
+  // 3. Dibuixar el cotxe del jugador (Més amunt, Y=450, Resplendor cian)
+  drawCar(player.x, player.y, player.width, player.height, player.color, true);
+
+  // 4. Capa superior de pluja
+  drawRain();
+}
+
+function gameLoop() {
+  update();
+  render();
+  if (gameRunning) {
+    requestAnimationFrame(gameLoop);
   }
+}
 
-  function loop(now) {
-    if (!running) return;
-
-    const dt = Math.min((now - last) / 1000, .033);
-    last = now;
-
-    // La velocitat puja 2.4 vegades més ràpid
-    difficulty += dt * 0.015 * 2.4;
-
-    const baseSpeed =
-      360 * difficulty * player.speedMultiplier;
-
-    stripeOffset += baseSpeed * dt;
-
-    // =========================
-    // MOVIMENT ESTIL SUBWAY SURFERS
-    // =========================
-
-    laneCooldown -= dt;
-
-    const left = keys['arrowleft'] || keys['a'];
-    const right = keys['arrowright'] || keys['d'];
-
-    if (laneCooldown <= 0) {
-
-      if (left) {
-        targetLane = Math.max(0, targetLane - 1);
-        laneCooldown = 0.18;
-        updatePlayerLane();
-      }
-
-      if (right) {
-        targetLane = Math.min(2, targetLane + 1);
-        laneCooldown = 0.18;
-        updatePlayerLane();
-      }
-    }
-
-    // Moviment suau cap al centre del carril
-    const difference = player.targetX - player.x;
-
-    player.x += difference * Math.min(
-      1,
-      dt * 12 * player.controlMultiplier
-    );
-
-    // El cotxe s'inclina una mica quan canvia de carril
-    player.tilt = difference * 0.008;
-
-    // =========================
-    // APARICIÓ DELS RIVALS
-    // =========================
-
-    spawnTimer -= dt;
-
-    if (spawnTimer <= 0) {
-      spawnTraffic();
-
-      const min = .34;
-      const max = .82;
-
-      spawnTimer =
-        Math.max(min, max - difficulty * .06) +
-        Math.random() * .22;
-    }
-
-    for (const c of traffic) {
-      c.y += c.speed * difficulty * dt;
-      c.x += c.drift * dt;
-
-      if (!c.passed && c.y > player.y + player.h) {
-        c.passed = true;
-        score += 12;
-        emit(c.x + c.w / 2, c.y, 5, '#ffe26b');
-      }
-
-      if (collide(player, c)) {
-        emit(
-          player.x + player.w / 2,
-          player.y + player.h / 2,
-          26,
-          '#ff4d6d'
-        );
-
-        endGame();
-        return;
-      }
-    }
-
-    traffic = traffic.filter(c => c.y < H + 110);
-
-    // Punts automàtics
-    score += dt * 8 * difficulty;
-
-    for (const p of particles) {
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx *= .96;
-      p.vy *= .96;
-      p.life -= dt;
-    }
-
-    particles = particles.filter(p => p.life > 0);
-
-    updateUI();
-
-    const s = shake;
-    shake = Math.max(0, shake - dt * 30);
-
-    ctx.save();
-
-    if (s) {
-      ctx.translate(
-        (Math.random() - .5) * s,
-        (Math.random() - .5) * s
-      );
-    }
-
-    drawRoad();
-
-    traffic.forEach(c => car(c, false));
-    car(player, true);
-
-    for (const p of particles) {
-      ctx.globalAlpha = Math.max(0, p.life / .7);
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.globalAlpha = 1;
-    ctx.restore();
-
-    requestAnimationFrame(loop);
+function endGame() {
+  gameRunning = false;
+  if (score > record) {
+    record = score;
+    localStorage.setItem('carGame_record_v2', record);
+    recordEl.textContent = record;
   }
+  finalScoreEl.textContent = score;
+  gameOverEl.classList.remove('hidden');
+}
 
-  document.getElementById('start').addEventListener('click', startGame);
-  document.getElementById('restart').addEventListener('click', startGame);
+function restartGame() {
+  score = 0;
+  speedMultiplier = 1.0;
+  currentSpeed = baseSpeed;
+  roadOffset = 0;
+  enemies = [];
+  enemyTimer = 0;
+  
+  currentLane = 1;
+  player.x = getLaneX(1, player.width);
+  player.targetX = getLaneX(1, player.width);
+  
+  gameRunning = true;
+  gameOverEl.classList.add('hidden');
+  gameLoop();
+}
 
-  resize();
-  reset();
-  renderShop();
-
-  // Pantalla inicial
-  function idle() {
-    if (running || counting) return;
-
-    drawRoad();
-    car(player, true);
-
-    requestAnimationFrame(idle);
-  }
-
-  idle();
-
-})();
+// Iniciar el joc
+gameLoop();
 </script>
-
 </body>
 </html>
