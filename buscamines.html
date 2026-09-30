@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Busca Mines</title>
+<style>
+  :root{
+    --bg:#07111f;
+    --panel:#0d1a2d;
+    --panel2:#10233d;
+    --cell:#16304d;
+    --cell2:#1b3b5f;
+    --open:#0c2036;
+    --text:#eaf6ff;
+    --muted:#91abc2;
+    --accent:#45e6ff;
+    --green:#51f39d;
+    --yellow:#ffd65a;
+    --red:#ff5874;
+    --shadow:0 18px 45px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(69,230,255,.12), transparent 30%),
+      radial-gradient(circle at 85% 90%, rgba(81,243,157,.08), transparent 30%),
+      linear-gradient(145deg,#050b14,#09182b 50%,#07111f);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .app{width:min(1050px,100%)}
+  .top{
+    display:flex; justify-content:space-between; gap:18px; align-items:end; margin-bottom:16px;
+  }
+  h1{margin:0;font-size:clamp(28px,5vw,48px);letter-spacing:-1.5px}
+  .sub{margin-top:5px;color:var(--muted);font-size:14px}
+  .panel{
+    background:linear-gradient(180deg,rgba(16,35,61,.9),rgba(10,26,45,.94));
+    border:1px solid rgba(255,255,255,.08); border-radius:22px; box-shadow:var(--shadow);
+    backdrop-filter:blur(10px);
+  }
+  .controls{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:10px; padding:12px;
+  }
+  button, select{
+    border:1px solid rgba(255,255,255,.1); color:var(--text); background:var(--panel2);
+    border-radius:13px; padding:11px 13px; font:inherit; cursor:pointer;
+    transition:.18s transform,.18s border-color,.18s background;
+  }
+  button:hover,select:hover{transform:translateY(-1px);border-color:rgba(69,230,255,.45)}
+  button:active{transform:translateY(1px)}
+  .primary{background:linear-gradient(135deg,#19cfe9,#228af3);color:#04101d;font-weight:800}
+  .stats{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:0 12px 12px
+  }
+  .stat{padding:13px 15px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+  .stat b{display:block;font-size:22px;margin-top:2px}
+  .stat span{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+  .game-wrap{padding:16px;display:flex;flex-direction:column;align-items:center}
+  .board{
+    --cols:9;
+    display:grid;grid-template-columns:repeat(var(--cols),minmax(24px,1fr));
+    gap:5px;width:min(760px,100%);user-select:none;touch-action:manipulation;
+  }
+  .cell{
+    aspect-ratio:1; min-width:0; padding:0; border-radius:9px;
+    display:grid;place-items:center;font-weight:900;font-size:clamp(13px,2.2vw,20px);
+    color:var(--text); background:linear-gradient(145deg,var(--cell2),var(--cell));
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.2);
+    position:relative; overflow:hidden;
+  }
+  .cell::after{
+    content:"";position:absolute;inset:0;opacity:0;background:linear-gradient(135deg,rgba(255,255,255,.16),transparent 45%);
+    transition:.15s;
+  }
+  .cell:hover::after{opacity:1}
+  .cell.open{background:var(--open);box-shadow:inset 0 0 0 1px rgba(255,255,255,.045)}
+  .cell.flag{background:linear-gradient(145deg,#244d65,#17384b)}
+  .cell.flag::before{content:"⚑";font-size:clamp(14px,2vw,20px);color:var(--yellow)}
+  .cell.mine{background:radial-gradient(circle,#3f1730 5%,#7b2945 42%,#25152f 75%)}
+  .cell.mine::before{content:"✹";color:#fff;font-size:1.05em;animation:pop .25s ease-out}
+  .cell.exploded{background:radial-gradient(circle,#ffcf62 0%,#ff5874 35%,#4f1730 75%)}
+  .cell.n1{color:#4fcbff}.cell.n2{color:#51f39d}.cell.n3{color:#ffd65a}.cell.n4{color:#c7a6ff}
+  .cell.n5{color:#ff7b8e}.cell.n6{color:#6df2d0}.cell.n7{color:#fff}.cell.n8{color:#93a8bb}
+  @keyframes pop{from{transform:scale(.2) rotate(-30deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+  .message{min-height:26px;margin-top:14px;color:var(--muted);text-align:center;font-size:14px}
+  .message strong{color:var(--accent)}
+  .tips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+  .chip{font-size:12px;color:var(--muted);border:1px solid rgba(255,255,255,.07);padding:7px 10px;border-radius:999px}
+  .win-glow{animation:win 1s ease-in-out infinite alternate}
+  @keyframes win{to{box-shadow:0 0 30px rgba(81,243,157,.35)}}
+  .shake{animation:shake .25s linear}
+  @keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+  @media(max-width:740px){
+    .controls{grid-template-columns:repeat(2,1fr)}
+    .controls .primary{grid-column:1/-1}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .board{gap:3px}
+    .cell{border-radius:6px}
+    body{padding:10px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div>
+      <h1>💣 Busca Mines <span style="color:var(--accent)">PREMIUM</span></h1>
+      <div class="sub">Clàssic Busca Mines, amb una mica més d'adrenalina.</div>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="controls">
+      <select id="difficulty" aria-label="Dificultat">
+        <option value="easy">Fàcil · 6×6 · 7 mines</option>
+        <option value="medium" selected>Mitjà · 9×9 · 12 mines</option>
+        <option value="hard">Difícil · 16×16 · 40 mines</option>
+        <option value="expert">Expert · 19×19 · 70 mines</option>
+      </select>
+      <button id="newBtn" class="primary">Nova partida</button>
+      <button id="modeBtn">Mode: 👆 Obrir</button>
+      <button id="hintBtn">✨ Pista</button>
+      <button id="soundBtn">🔊 So</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Mines restants</span><b id="minesLeft">12</b></div>
+      <div class="stat"><span>Temps</span><b id="timer">000</b></div>
+      <div class="stat"><span>Moviments</span><b id="moves">0</b></div>
+      <div class="stat"><span>Combo segur</span><b id="combo">0×</b></div>
+    </div>
+    <div class="game-wrap">
+      <div id="board" class="board" aria-label="Tauler del Busca Mines"></div>
+      <div id="message" class="message">Obre una casella per començar. <strong>La primera sempre és segura.</strong></div>
+      <div class="tips">
+        <span class="chip">👆 Clic: obrir</span>
+        <span class="chip">⚑ Dreta / bandera: marcar</span>
+        <span class="chip">📱 Mòbil: canvia el mode</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const configs = {
+    easy:{rows:6,cols:6,mines:7},
+    medium:{rows:9,cols:9,mines:12},
+    hard:{rows:16,cols:16,mines:40},
+    expert:{rows:19,cols:19,mines:70}
+  };
+
+  const boardEl=document.getElementById('board');
+  const difficultyEl=document.getElementById('difficulty');
+  const newBtn=document.getElementById('newBtn');
+  const modeBtn=document.getElementById('modeBtn');
+  const hintBtn=document.getElementById('hintBtn');
+  const soundBtn=document.getElementById('soundBtn');
+  const minesLeftEl=document.getElementById('minesLeft');
+  const timerEl=document.getElementById('timer');
+  const movesEl=document.getElementById('moves');
+  const comboEl=document.getElementById('combo');
+  const messageEl=document.getElementById('message');
+
+  let cfg, cells=[], mineSet=new Set(), flags=new Set();
+  let started=false, over=false, mode='open', timer=0, timerId=null;
+  let moves=0, combo=0, soundOn=true;
+
+  function beep(freq=440,duration=.06,type='sine'){
+    if(!soundOn) return;
+    try{
+      const AudioCtx=window.AudioContext||window.webkitAudioContext;
+      const ctx=new AudioCtx();
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.type=type; osc.frequency.value=freq;
+      gain.gain.value=.035; osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime+duration);
+    }catch(_){}
+  }
+
+  function formatTime(n){return String(n).padStart(3,'0')}
+
+  function neighbors(index){
+    const r=Math.floor(index/cfg.cols), c=index%cfg.cols, out=[];
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      if(!dr&&!dc) continue;
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<cfg.rows&&nc>=0&&nc<cfg.cols) out.push(nr*cfg.cols+nc);
+    }
+    return out;
+  }
+
+  function placeMines(safeIndex){
+    mineSet.clear();
+    const safeZone=new Set([safeIndex,...neighbors(safeIndex)]);
+    while(mineSet.size<cfg.mines){
+      const x=Math.floor(Math.random()*cells.length);
+      if(!safeZone.has(x)) mineSet.add(x);
+    }
+    for(const cell of cells) cell.n=neighbors(cell.i).filter(i=>mineSet.has(i)).length;
+  }
+
+  function newGame(){
+    stopTimer();
+    cfg=configs[difficultyEl.value];
+    started=false; over=false; timer=0; moves=0; combo=0; flags.clear(); mineSet.clear();
+    timerEl.textContent='000'; movesEl.textContent='0'; comboEl.textContent='0×';
+    minesLeftEl.textContent=cfg.mines;
+    messageEl.innerHTML='Obre una casella per començar. <strong>La primera sempre és segura.</strong>';
+    boardEl.style.setProperty('--cols',cfg.cols);
+    boardEl.classList.remove('win-glow');
+    boardEl.innerHTML='';
+    cells=Array.from({length:cfg.rows*cfg.cols},(_,i)=>({i,n:0,open:false,flag:false}));
+    cells.forEach(cell=>{
+      const b=document.createElement('button');
+      b.className='cell';
+      b.setAttribute('aria-label',`Casella ${cell.i+1}`);
+      b.addEventListener('click',()=>handle(cell.i));
+      b.addEventListener('contextmenu',e=>{e.preventDefault(); toggleFlag(cell.i)});
+      cell.el=b; boardEl.appendChild(b);
+    });
+  }
+
+  function startTimer(){
+    if(timerId) return;
+    timerId=setInterval(()=>{
+      if(over) return;
+      timer++; timerEl.textContent=formatTime(timer);
+    },1000);
+  }
+  function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
+
+  function handle(i){
+    if(over) return;
+    if(mode==='flag'){toggleFlag(i);return}
+    if(cells[i].flag||cells[i].open) return;
+    if(!started){placeMines(i);started=true;startTimer()}
+    moves++; movesEl.textContent=moves;
+    if(mineSet.has(i)){explode(i);return}
+    reveal(i);
+    combo++; comboEl.textContent=combo+'×';
+    beep(650,.045);
+    checkWin();
+  }
+
+  function reveal(start){
+    const stack=[start], seen=new Set();
+    while(stack.length){
+      const i=stack.pop();
+      if(seen.has(i)||cells[i].flag) continue;
+      seen.add(i);
+      if(cells[i].open) continue;
+      cells[i].open=true; renderCell(cells[i]);
+      if(cells[i].n===0) neighbors(i).forEach(n=>{if(!seen.has(n)) stack.push(n)});
+    }
+  }
+
+  function renderCell(cell,showMine=false){
+    const el=cell.el;
+    el.className='cell';
+    if(cell.open){
+      el.classList.add('open');
+      if(cell.n>0){el.classList.add('n'+cell.n);el.textContent=cell.n}
+      else el.textContent='';
+    }else if(cell.flag){
+      el.classList.add('flag'); el.textContent='';
+    }else el.textContent='';
+    if(showMine){
+      el.classList.add('mine'); el.textContent='';
+    }
+  }
+
+  function toggleFlag(i){
+    if(over || cells[i].open) return;
+    const cell=cells[i];
+    if(!cell.flag && flags.size>=cfg.mines) return;
+    cell.flag=!cell.flag;
+    if(cell.flag) flags.add(i); else flags.delete(i);
+    renderCell(cell);
+    minesLeftEl.textContent=cfg.mines-flags.size;
+    beep(cell.flag?820:520,.05,'square');
+    checkWin();
+  }
+
+  function explode(i){
+    over=true; stopTimer(); combo=0; comboEl.textContent='0×';
+    boardEl.classList.add('shake');
+    setTimeout(()=>boardEl.classList.remove('shake'),280);
+    cells.forEach(c=>{
+      if(mineSet.has(c.i)) renderCell(c,true);
+      else if(c.flag && !mineSet.has(c.i)){c.el.textContent='✕';c.el.style.color='var(--red)'}
+    });
+    cells[i].el.classList.add('exploded');
+    messageEl.innerHTML='<strong style="color:var(--red)">BOOM!</strong> Has trepitjat una mina. Prova-ho de nou.';
+    beep(110,.22,'sawtooth');
+  }
+
+  function checkWin(){
+    if(!started||over) return;
+    const safe=cells.filter(c=>!mineSet.has(c.i));
+    if(safe.every(c=>c.open)){
+      over=true; stopTimer();
+      boardEl.classList.add('win-glow');
+      mineSet.forEach(i=>{cells[i].flag=true;flags.add(i);renderCell(cells[i])});
+      minesLeftEl.textContent='0';
+      messageEl.innerHTML=`<strong style="color:var(--green)">CAMP NET!</strong> ${safe.length} caselles segures en ${timer}s.`;
+      beep(720,.08); setTimeout(()=>beep(980,.12),90);
+    }
+  }
+
+  function hint(){
+    if(over) return;
+    const candidates=cells.filter(c=>!c.open&&!c.flag);
+    if(!candidates.length) return;
+    let safeCandidate=null;
+    for(const c of candidates){
+      if(started && !mineSet.has(c.i)){safeCandidate=c;break}
+    }
+    const c=safeCandidate || candidates[Math.floor(Math.random()*candidates.length)];
+    c.el.animate([
+      {transform:'scale(1)',boxShadow:'inset 0 -3px 0 rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.2)'},
+      {transform:'scale(1.13)',boxShadow:'0 0 22px rgba(69,230,255,.8)'},
+      {transform:'scale(1)'}
+    ],{duration:700});
+    messageEl.innerHTML=c===safeCandidate
+      ? '✨ <strong>Pista:</strong> aquesta casella és segura.'
+      : '✨ <strong>Pista:</strong> la partida encara no ha revelat prou informació.';
+    setTimeout(()=>{
+      if(!over) messageEl.innerHTML='Continua amb compte. <strong>Les mines no perdonen.</strong>';
+    },1600);
+    beep(1000,.08);
+  }
+
+  modeBtn.addEventListener('click',()=>{
+    mode=mode==='open'?'flag':'open';
+    modeBtn.textContent=mode==='open'?'Mode: 👆 Obrir':'Mode: ⚑ Bandera';
+  });
+  hintBtn.addEventListener('click',hint);
+  soundBtn.addEventListener('click',()=>{
+    soundOn=!soundOn; soundBtn.textContent=soundOn?'🔊 So':'🔇 So';
+  });
+  newBtn.addEventListener('click',newGame);
+  difficultyEl.addEventListener('change',newGame);
+
+  newGame();
+})();
+</script>
+</body>
+</html>
