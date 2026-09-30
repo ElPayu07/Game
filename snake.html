@@ -129,7 +129,7 @@
         /* ESTILS DE LA BOTIGA */
         .shop-container {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
             justify-content: center;
             flex-wrap: wrap;
@@ -139,10 +139,10 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
             flex: 1;
-            min-width: 220px;
+            min-width: 170px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -150,23 +150,23 @@
 
         .shop-card h3 {
             color: #48dbfb;
-            font-size: 1rem;
+            font-size: 0.95rem;
             margin-bottom: 5px;
         }
 
         .shop-card p {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: #c8d6e5;
             margin-bottom: 8px;
-            min-height: 30px;
+            min-height: 28px;
         }
 
         .shop-btn {
             background: linear-gradient(145deg, #e94560, #ff5277);
             color: white;
             border: none;
-            padding: 8px 15px;
-            font-size: 0.95rem;
+            padding: 8px 12px;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.2s;
             border-radius: 8px;
@@ -309,7 +309,7 @@
         }
         
         @media (max-width: 900px) {
-            .shop-container { display: none; } /* En mòbils molt petits s'amaga per espai, ideal jugar horitzontal */
+            .shop-container { display: none; }
             .mobile-controls { display: flex; }
         }
         
@@ -359,7 +359,7 @@
             </div>
         </div>
         
-        <!-- ÀREA DE JOC (S'inicia a 20x10) -->
+        <!-- ÀREA DE JOC -->
         <div class="game-board">
             <canvas id="gameCanvas"></canvas>
             <div id="gameOver" class="game-over">
@@ -369,14 +369,14 @@
             </div>
         </div>
         
-        <!-- PANELL INFERIOR (Botiga, Controls i Stats) -->
+        <!-- PANELL INFERIOR -->
         <div class="bottom-panel">
             
             <!-- BOTIGA -->
             <div class="shop-container">
                 <div class="shop-card">
                     <h3>🍎 +1 Poma</h3>
-                    <p>Més pomes simultànies al mapa (Nivell <span id="lvl-apple">1</span>)</p>
+                    <p>Més pomes simultànies (Nivell <span id="lvl-apple">1</span>)</p>
                     <button class="shop-btn" id="btn-apple" onclick="buyApple()">Cost: 20 SC</button>
                 </div>
                 <div class="shop-card">
@@ -386,8 +386,13 @@
                 </div>
                 <div class="shop-card">
                     <h3>✨ Més Sort</h3>
-                    <p>Més probabilitat de pomes rares (Nivell <span id="lvl-luck">0</span>)</p>
+                    <p>Més probabilitat de rareses (Nivell <span id="lvl-luck">0</span>)</p>
                     <button class="shop-btn" id="btn-luck" onclick="buyLuck()">Cost: 25 SC</button>
+                </div>
+                <div class="shop-card">
+                    <h3>🪙 Multiplicador</h3>
+                    <p>+0.10x monedes (Actual: x<span id="val-mult">1.00</span>)</p>
+                    <button class="shop-btn" id="btn-mult" onclick="buyMultiplier()">Cost: 40 SC</button>
                 </div>
             </div>
 
@@ -430,7 +435,6 @@
     </div>
 
     <script>
-        // DOM Elements
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
@@ -445,24 +449,22 @@
         const btnApple = document.getElementById('btn-apple');
         const btnMap = document.getElementById('btn-map');
         const btnLuck = document.getElementById('btn-luck');
+        const btnMult = document.getElementById('btn-mult');
         
-        // Settings de la Quadrícula (Inici: 20x10)
-        const GRID_SIZE = 30; // Mida en píxels de cada casella
+        const GRID_SIZE = 30;
         let cols = 20;
         let rows = 10;
         let GAME_WIDTH = cols * GRID_SIZE;
         let GAME_HEIGHT = rows * GRID_SIZE;
         
-        // Tipus de Poma
         const APPLE_TYPES = {
             NORMAL: { color: '#e74c3c', points: 10, coins: 1 },
             GOLDEN: { color: '#f1c40f', points: 25, coins: 5 },
             MAGIC: { color: '#9b59b6', points: 45, coins: 15 }
         };
         
-        // Estat del Joc
         let snake = [];
-        let apples = []; // Ara és un array per suportar múltiples pomes
+        let apples = [];
         let direction = 'right';
         let nextDirection = 'right';
         
@@ -476,19 +478,70 @@
         let gameRunning = false;
         let gamePaused = false;
         
-        // Stats
         let goldenApplesEaten = 0;
         let magicApplesEaten = 0;
         let normalApplesEaten = 0;
 
-        // Variables Botiga
+        // Variables de la Botiga (valors per defecte)
         let maxApples = 1;
         let mapLevel = 0;
         let luckLevel = 0;
+        let coinMultiplier = 1.0;
         
         let costApple = 20;
         let costMap = 30;
         let costLuck = 25;
+        let costMult = 40;
+
+        // --- SISTEMA DE DESAMENT (LOCALSTORAGE) --- //
+        
+        function loadSavedData() {
+            const saved = localStorage.getItem('snakeGameSaveData');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    snakeCoins = data.coins !== undefined ? data.coins : 0;
+                    maxApples = data.maxApples || 1;
+                    mapLevel = data.mapLevel || 0;
+                    luckLevel = data.luckLevel || 0;
+                    coinMultiplier = data.coinMultiplier || 1.0;
+                    
+                    costApple = data.costApple || 20;
+                    costMap = data.costMap || 30;
+                    costLuck = data.costLuck || 25;
+                    costMult = data.costMult || 40;
+
+                    cols = 20 + (mapLevel * 2);
+                    rows = 10 + (mapLevel * 2);
+                } catch(e) {
+                    console.error("Error carregant les dades guardades:", e);
+                }
+            }
+            updateShopUI();
+        }
+
+        function saveData() {
+            const dataToSave = {
+                coins: snakeCoins,
+                maxApples: maxApples,
+                mapLevel: mapLevel,
+                luckLevel: luckLevel,
+                coinMultiplier: coinMultiplier,
+                costApple: costApple,
+                costMap: costMap,
+                costLuck: costLuck,
+                costMult: costMult
+            };
+            localStorage.setItem('snakeGameSaveData', JSON.stringify(dataToSave));
+        }
+
+        function updateShopUI() {
+            document.getElementById('lvl-apple').textContent = maxApples;
+            document.getElementById('lvl-map').textContent = mapLevel;
+            document.getElementById('lvl-luck').textContent = luckLevel;
+            document.getElementById('val-mult').textContent = coinMultiplier.toFixed(2);
+            updateShopButtons();
+        }
         
         function initGame() {
             updateCanvasSize();
@@ -532,10 +585,8 @@
         }
 
         function getAppleTypeBasedOnLuck() {
-            // Percentatges base (Sense sort): Màgica 5%, Daurada 15%, Normal 80%
-            // Cada nivell de sort augmenta Rares i Èpiques
-            let magicChance = 0.05 + (luckLevel * 0.03); // +3% per nivell
-            let goldenChance = 0.15 + (luckLevel * 0.05); // +5% per nivell
+            let magicChance = 0.05 + (luckLevel * 0.03);
+            let goldenChance = 0.15 + (luckLevel * 0.05);
             
             const rand = Math.random();
             if (rand <= magicChance) return APPLE_TYPES.MAGIC;
@@ -556,14 +607,12 @@
                         type: getAppleTypeBasedOnLuck()
                     };
                     
-                    // Comprova que no surti a sobre de la serp
                     for (let segment of snake) {
                         if (segment.x === newFood.x && segment.y === newFood.y) {
                             foodOnSnakeOrApple = true;
                             break;
                         }
                     }
-                    // Comprova que no surti a sobre d'una altra poma
                     for (let a of apples) {
                         if (a.x === newFood.x && a.y === newFood.y) {
                             foodOnSnakeOrApple = true;
@@ -577,14 +626,12 @@
         }
         
         function draw() {
-            // Fons del joc
             const gradient = ctx.createLinearGradient(0, 0, GAME_WIDTH, GAME_HEIGHT);
             gradient.addColorStop(0, '#0c2461');
             gradient.addColorStop(1, '#1e3799');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
             
-            // Graella Subtil
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.lineWidth = 1;
             for (let x = 0; x <= GAME_WIDTH; x += GRID_SIZE) {
@@ -594,10 +641,8 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(GAME_WIDTH, y); ctx.stroke();
             }
             
-            // Dibuixar la Serp
             snake.forEach((segment, index) => {
                 if (index === 0) {
-                    // CAP
                     const headGradient = ctx.createRadialGradient(
                         segment.x + GRID_SIZE/2, segment.y + GRID_SIZE/2, 0,
                         segment.x + GRID_SIZE/2, segment.y + GRID_SIZE/2, GRID_SIZE/2
@@ -611,7 +656,6 @@
                     ctx.lineWidth = 2;
                     ctx.strokeRect(segment.x, segment.y, GRID_SIZE, GRID_SIZE);
                     
-                    // Ulls
                     ctx.fillStyle = '#2d3436';
                     let eyeSize = GRID_SIZE / 4;
                     let leftEyeX, leftEyeY, rightEyeX, rightEyeY;
@@ -642,7 +686,6 @@
                     ctx.beginPath(); ctx.arc(leftEyeX - eyeSize/4, leftEyeY - eyeSize/4, eyeSize/4, 0, Math.PI*2); ctx.fill();
                     ctx.beginPath(); ctx.arc(rightEyeX - eyeSize/4, rightEyeY - eyeSize/4, eyeSize/4, 0, Math.PI*2); ctx.fill();
                 } else {
-                    // COS
                     const bodyGradient = ctx.createRadialGradient(
                         segment.x + GRID_SIZE/2, segment.y + GRID_SIZE/2, 0,
                         segment.x + GRID_SIZE/2, segment.y + GRID_SIZE/2, GRID_SIZE/2
@@ -666,7 +709,6 @@
                 }
             });
             
-            // Dibuixar totes les pomes
             apples.forEach(apple => {
                 const appleRadius = GRID_SIZE / 2;
                 const appleX = apple.x + appleRadius;
@@ -700,7 +742,6 @@
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
                 
-                // Branca i fulla
                 ctx.fillStyle = '#8b4513';
                 ctx.fillRect(appleX - 2, appleY - appleRadius - 5, 4, 8);
                 ctx.fillStyle = '#2ecc71';
@@ -708,7 +749,6 @@
                 ctx.ellipse(appleX + 3, appleY - appleRadius - 2, 5, 3, Math.PI/4, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Brillantor interior
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.beginPath();
                 ctx.arc(appleX - appleRadius/3, appleY - appleRadius/3, appleRadius/4, 0, Math.PI * 2);
@@ -727,7 +767,6 @@
                 case 'right': head.x += GRID_SIZE; break;
             }
             
-            // Col·lisions
             if (head.x < 0 || head.x >= GAME_WIDTH || head.y < 0 || head.y >= GAME_HEIGHT) {
                 gameOver(); return;
             }
@@ -739,33 +778,32 @@
             
             snake.unshift(head);
             
-            // Comprovar si menja alguna poma
             const eatenIndex = apples.findIndex(a => a.x === head.x && a.y === head.y);
             
             if (eatenIndex !== -1) {
                 const eatenApple = apples[eatenIndex];
                 
-                // Donar punts i monedes
                 score += eatenApple.type.points;
-                snakeCoins += eatenApple.type.coins;
+                
+                const earnedCoins = parseFloat((eatenApple.type.coins * coinMultiplier).toFixed(1));
+                snakeCoins = parseFloat((snakeCoins + earnedCoins).toFixed(1));
                 
                 if (eatenApple.type === APPLE_TYPES.GOLDEN) {
-                    goldenApplesEaten++; showNotification(`Poma Daurada! +${eatenApple.type.coins} SC`);
+                    goldenApplesEaten++; showNotification(`Poma Daurada! +${earnedCoins} SC`);
                 } else if (eatenApple.type === APPLE_TYPES.MAGIC) {
-                    magicApplesEaten++; showNotification(`Poma Màgica! +${eatenApple.type.coins} SC`);
+                    magicApplesEaten++; showNotification(`Poma Màgica! +${earnedCoins} SC`);
                 } else {
                     normalApplesEaten++;
                 }
                 
-                // Treure la poma menjada i generar-ne una de nova
                 apples.splice(eatenIndex, 1);
                 
                 updateScore();
                 updateStatsUI();
                 updateShopButtons();
+                saveData(); // Guardem les monedes aconseguides
                 generateFood();
                 
-                // Control del Nivell
                 const newLevel = Math.floor(score / 100) + 1;
                 if (newLevel > level) {
                     level = newLevel;
@@ -779,16 +817,16 @@
                 }
                 updateProgressBars();
             } else {
-                snake.pop(); // Es mou normalment
+                snake.pop();
             }
             
             draw();
         }
         
-        // --- FUNCIONS DE LA BOTIGA --- //
+        // --- COMPRES A LA BOTIGA --- //
         
         function updateShopButtons() {
-            coinsElement.textContent = snakeCoins;
+            coinsElement.textContent = snakeCoins.toFixed(1).replace('.0', '');
             
             btnApple.disabled = snakeCoins < costApple;
             btnApple.textContent = `Cost: ${costApple} SC`;
@@ -798,6 +836,9 @@
             
             btnLuck.disabled = snakeCoins < costLuck;
             btnLuck.textContent = `Cost: ${costLuck} SC`;
+
+            btnMult.disabled = snakeCoins < costMult;
+            btnMult.textContent = `Cost: ${costMult} SC`;
         }
         
         function buyApple() {
@@ -806,7 +847,8 @@
                 maxApples++;
                 costApple = Math.floor(costApple * 1.5);
                 document.getElementById('lvl-apple').textContent = maxApples;
-                generateFood(); // Genera la nova poma instantàniament
+                generateFood();
+                saveData();
                 updateShopButtons();
                 draw();
             }
@@ -822,8 +864,9 @@
                 document.getElementById('lvl-map').textContent = mapLevel;
                 
                 updateCanvasSize();
+                saveData();
                 updateShopButtons();
-                draw(); // Redibuixa perquè el mapa creix a l'instant
+                draw();
             }
         }
         
@@ -833,11 +876,23 @@
                 luckLevel++;
                 costLuck = Math.floor(costLuck * 1.5);
                 document.getElementById('lvl-luck').textContent = luckLevel;
+                saveData();
                 updateShopButtons();
             }
         }
 
-        // --- FUNCIONS AUXILIARS I UI --- //
+        function buyMultiplier() {
+            if (snakeCoins >= costMult) {
+                snakeCoins -= costMult;
+                coinMultiplier = parseFloat((coinMultiplier + 0.10).toFixed(2));
+                costMult = Math.floor(costMult * 1.5);
+                document.getElementById('val-mult').textContent = coinMultiplier.toFixed(2);
+                saveData();
+                updateShopButtons();
+            }
+        }
+
+        // --- UI & CONTROLS --- //
         
         function showNotification(message) {
             notification.textContent = message;
@@ -876,6 +931,7 @@
             clearInterval(gameLoop);
             finalScoreElement.textContent = `Puntuació: ${score}`;
             gameOverElement.style.display = 'flex';
+            saveData(); // Guardem el progrés complet en acabar la partida
         }
         
         function startGame() {
@@ -925,7 +981,6 @@
             }
         }
         
-        // Controls
         document.addEventListener('keydown', (e) => {
             if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) e.preventDefault();
             switch(e.key) {
@@ -950,12 +1005,11 @@
         document.getElementById('leftBtn').addEventListener('click', () => changeDirection('left'));
         document.getElementById('rightBtn').addEventListener('click', () => changeDirection('right'));
         
-        // Setup Inicial a l'obrir
         window.addEventListener('load', () => {
+            loadSavedData(); // Carrega el progrés guardat
             updateCanvasSize();
             highScoreElement.textContent = highScore;
             updateStatsUI();
-            updateShopButtons();
             draw();
         });
     </script>
