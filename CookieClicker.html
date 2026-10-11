@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clicker de Galetes - Super Botiga</title>
+    <title>Clicker de Galetes</title>
     <style>
         * {
             margin: 0;
@@ -660,6 +660,36 @@
             if (pestanya === 'assoliments') renderitzatAssoliments();
         }
 
+        // ESTRELLES DEL CATÀLEG: 1M, 1Qi i 1Dc de galetes acumulades.
+        // Sistema integrat al mateix HTML, independent dels 19 assoliments.
+        function registrarEstrellesCookie() {
+            const clau = 'hipercasual:estrelles:v1:cookie';
+            try {
+                let anterior = {};
+                try {
+                    const desat = JSON.parse(localStorage.getItem(clau) || '{}');
+                    if (desat && typeof desat === 'object' && !Array.isArray(desat)) {
+                        anterior = desat;
+                    }
+                } catch (_) { /* Ignorem dades antigues invàlides. */ }
+
+                const total = galetesTotalsAcumulades;
+                const progres = {
+                    ...anterior,
+                    first: Boolean(anterior.first) || total >= 1e6,
+                    middle: Boolean(anterior.middle) || total >= 1e18,
+                    complete: Boolean(anterior.complete) || total >= 1e33,
+                    cookies: Math.max(Number(anterior.cookies) || 0, total)
+                };
+                if (progres.first !== anterior.first ||
+                    progres.middle !== anterior.middle ||
+                    progres.complete !== anterior.complete ||
+                    progres.cookies !== anterior.cookies) {
+                    localStorage.setItem(clau, JSON.stringify(progres));
+                }
+            } catch (_) { /* El joc continua si localStorage no està disponible. */ }
+        }
+
         function comprovarAssoliments() {
             assoliments.forEach(a => {
                 if (!a.desbloquejat) {
@@ -796,6 +826,7 @@
             clicsTotalsElement.textContent = formatNumero(clicsTotals);
             
             comprovarAssoliments();
+            registrarEstrellesCookie();
 
             millores.forEach(millora => {
                 const costActual = calcularCost(millora);
