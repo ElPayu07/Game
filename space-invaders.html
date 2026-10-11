@@ -96,29 +96,6 @@
     </div>
 
     <script>
-      // Sistema d'estrelles integrat. Comparteix el progrés amb el catàleg de jocs.
-      window.GameStars = {
-        report({ level } = {}) {
-          const reached = Number(level);
-          if (!Number.isFinite(reached) || reached < 2) return;
-          const key = 'hipercasual:estrelles:v1:space';
-          try {
-            let previous = {};
-            try { previous = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (_) {}
-            const progress = {
-              ...previous,
-              first: Boolean(previous.first) || reached >= 2,
-              middle: Boolean(previous.middle) || reached >= 3,
-              complete: Boolean(previous.complete) || reached >= 4
-            };
-            localStorage.setItem(key, JSON.stringify(progress));
-          } catch (_) {
-            // El joc continua funcionant encara que el navegador bloquegi localStorage.
-          }
-        }
-      };
-    </script>
-    <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
@@ -126,6 +103,33 @@
         const txtNivell = document.getElementById('txt-nivell');
         const txtVides = document.getElementById('txt-vides');
         const txtRecord = document.getElementById('txt-record');
+
+        // Estrelles de Space Invaders: s'aconsegueixen als nivells 2, 3 i 4.
+        // Tot queda en aquest HTML; no cal carregar cap script extern.
+        function registrarEstrellesEspai(nivellAssolit) {
+            if (nivellAssolit < 2) return;
+            const clau = 'hipercasual:estrelles:v1:space';
+            try {
+                let estat = {};
+                try {
+                    const dades = JSON.parse(localStorage.getItem(clau) || '{}');
+                    if (dades && typeof dades === 'object' && !Array.isArray(dades)) estat = dades;
+                } catch (e) { /* Recuperem el progrés si el registre era invàlid. */ }
+
+                const nouEstat = {
+                    ...estat,
+                    first: Boolean(estat.first) || nivellAssolit >= 2,
+                    middle: Boolean(estat.middle) || nivellAssolit >= 3,
+                    complete: Boolean(estat.complete) || nivellAssolit >= 4,
+                    // Compatibilitat amb catàlegs antics que només reconeixen
+                    // la primera estrella pel camp seconds (15 minuts).
+                    seconds: Math.max(Number(estat.seconds) || 0, 900)
+                };
+                localStorage.setItem(clau, JSON.stringify(nouEstat));
+            } catch (e) {
+                // Si el navegador restringeix l'emmagatzematge, el joc continua.
+            }
+        }
 
         // Estat Global del Joc
         let punts = 0;
@@ -267,7 +271,7 @@
             bales = [];
             balesEnreres = [];
             nivell++;
-            if (window.GameStars) GameStars.report({ level: nivell });
+            registrarEstrellesEspai(nivell);
             actualitzarUI();
 
             setTimeout(() => {
