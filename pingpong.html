@@ -1330,7 +1330,61 @@
     // Start button state
     updateStartButtonState();
   </script>
-  <script src="estrelles.js"></script>
+  <script>
+    // Sistema d'estrelles autònom: compatible amb el catàleg i el progrés anterior.
+    (function () {
+      "use strict";
+      const KEY = "hipercasual:estrelles:v1:pingpong";
+      function read() {
+        try {
+          const d = JSON.parse(localStorage.getItem(KEY) || "{}");
+          return { seconds: Math.max(0, Number(d.seconds) || 0), first: !!d.first,
+                   middle: !!d.middle, complete: !!d.complete };
+        } catch (_) { return { seconds: 0, first: false, middle: false, complete: false }; }
+      }
+      function save(changes) {
+        const p = read();
+        const d = {
+          seconds: Math.max(p.seconds, Number(changes.seconds) || 0),
+          first: p.first || !!changes.first || !!changes.middle || !!changes.complete,
+          middle: p.middle || !!changes.middle || !!changes.complete,
+          complete: p.complete || !!changes.complete
+        };
+        if (d.seconds >= 900) d.first = true;
+        try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (_) {}
+      }
+      let playing = false;
+      let lastTick = Date.now();
+      let lastActivity = Date.now();
+      let pendingSeconds = 0;
+      function tick() {
+        const now = Date.now();
+        const delta = Math.max(0, Math.min(5, (now - lastTick) / 1000));
+        lastTick = now;
+        if (playing && document.visibilityState === "visible" && document.hasFocus()
+            && now - lastActivity <= 90000) pendingSeconds += delta;
+        if (pendingSeconds >= 1) {
+          const whole = Math.floor(pendingSeconds);
+          pendingSeconds -= whole;
+          save({ seconds: read().seconds + whole });
+        }
+      }
+      ["keydown", "pointerdown", "pointermove", "touchstart"].forEach(type => {
+        window.addEventListener(type, () => { lastActivity = Date.now(); }, { passive: true });
+      });
+      setInterval(tick, 1000);
+      window.addEventListener("pagehide", tick);
+      window.GameStars = {
+        start() { tick(); playing = true; lastActivity = Date.now(); },
+        pause() { tick(); playing = false; },
+        report(data) { if (Number(data && data.score) >= 500) save({ middle: true }); },
+        complete() { save({ complete: true }); },
+        get() { return read(); }
+      };
+      // Reconeix també els punts acumulats abans d'afegir els trofeus.
+      if (Number(localStorage.getItem("pongPlayerScoreV2")) >= 500) save({ middle: true });
+    })();
+  </script>
   <script>
     // Comprova també els punts guardats de partides anteriors.
     updatePongTrophies(false);
