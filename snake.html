@@ -451,6 +451,29 @@
         const btnLuck = document.getElementById('btn-luck');
         const btnMult = document.getElementById('btn-mult');
         
+        // SISTEMA D'ESTRELLES (integrat, sense fitxers externs).
+        // Nivells 3, 6 i 10. Compatible amb el catàleg Hiper Casual Games.
+        function registrarEstrellesSnake(nivellAssolit) {
+            const clau = 'hipercasual:estrelles:v1:snake';
+            if (nivellAssolit < 3) return;
+            try {
+                let anterior = {};
+                try {
+                    const llegit = JSON.parse(localStorage.getItem(clau) || '{}');
+                    if (llegit && typeof llegit === 'object' && !Array.isArray(llegit)) {
+                        anterior = llegit;
+                    }
+                } catch (err) { /* Dades antigues malformades: continuem. */ }
+                const progres = {
+                    ...anterior,
+                    first: Boolean(anterior.first) || nivellAssolit >= 3,
+                    middle: Boolean(anterior.middle) || nivellAssolit >= 6,
+                    complete: Boolean(anterior.complete) || nivellAssolit >= 10
+                };
+                localStorage.setItem(clau, JSON.stringify(progres));
+            } catch (err) { /* Sense localStorage, el joc continua funcionant. */ }
+        }
+
         const GRID_SIZE = 30;
         let cols = 20;
         let rows = 10;
@@ -807,6 +830,7 @@
                 const newLevel = Math.floor(score / 100) + 1;
                 if (newLevel > level) {
                     level = newLevel;
+                    registrarEstrellesSnake(level);
                     updateLevel();
                     showNotification(`Nivell ${level}!`);
                     if (gameSpeed > 70) {
