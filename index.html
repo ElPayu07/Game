@@ -70,7 +70,19 @@
       opacity: 0.9;
       transform: translateY(-1px);
     }
+
+    /* ÚNICA ampliació visual: les tres estrelles sota la descripció. */
+    .game-stars {
+      display: block;
+      margin-top: 10px;
+      color: #bbb;
+      font-size: 23px;
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+    .game-stars .earned { color: #e6ac24; }
   </style>
+  <script src="estrelles.js" defer></script>
 </head>
 
 <body>
@@ -81,9 +93,11 @@
     <div class="grid">
 
       <!-- Ping pong -->
-      <div class="card">
+      <div class="card" data-game="pingpong">
         <h2>Ping pong</h2>
-        <p>Un joc clàssic amb estil minimalista. v4</p>
+        <p>Un joc clàssic amb estil minimalista. v4
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="pingpong.html"
@@ -93,11 +107,12 @@
           Jugar
         </a>
       </div>
-
       <!-- Space Invaders -->
-      <div class="card">
+      <div class="card" data-game="space">
         <h2>Space Invaders</h2>
-        <p>Defensa la Terra en aquest clàssic arcade. v2</p>
+        <p>Defensa la Terra en aquest clàssic arcade. v2
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="space-invaders.html"
@@ -107,11 +122,12 @@
           Jugar
         </a>
       </div>
-      
       <!-- Snake Game -->
-      <div class="card">
+      <div class="card" data-game="snake">
         <h2>Snake Game</h2>
-        <p>Aconegueix totes les pomes possibles! v2.1</p>
+        <p>Aconegueix totes les pomes possibles! v2.1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="snake.html"
@@ -121,11 +137,12 @@
           Jugar
         </a>
       </div>
-            
       <!-- Cookie Clicker -->
-      <div class="card">
+      <div class="card" data-game="cookie">
         <h2>Cookie Clicker</h2>
-        <p>El famós joc de "clickar" una galeta. v2</p>
+        <p>El famós joc de "clickar" una galeta. v2
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="CookieClicker.html"
@@ -135,11 +152,12 @@
           Jugar
         </a>
       </div>
-            
       <!-- Geometry X -->
-      <div class="card">
+      <div class="card" data-game="geometry">
         <h2>Geometry X</h2>
-        <p>Salta per evitar els obstacles. v2</p>
+        <p>Salta per evitar els obstacles. v2
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="GeometryX.html"
@@ -149,11 +167,12 @@
           Jugar
         </a>
       </div>
-
       <!-- fishing -->
-      <div class="card">
+      <div class="card" data-game="fishing">
         <h2>Fishing</h2>
-        <p>Intenta pescar tant com puguis. v1.1</p>
+        <p>Intenta pescar tant com puguis. v1.1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="fishing.html"
@@ -163,11 +182,12 @@
           Jugar
         </a>
       </div>
-
       <!-- Alchemy RNG -->
-      <div class="card">
+      <div class="card" data-game="alchemy">
         <h2>Alchemy RNG</h2>
-        <p>Aconsegueix les millors aures possibles. v1</p>
+        <p>Aconsegueix les millors aures possibles. v1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="alchemyRNG.html"
@@ -177,11 +197,12 @@
           Jugar
         </a>
       </div>
-
       <!-- Tic Tac Toe -->
-      <div class="card">
+      <div class="card" data-game="tictactoe">
         <h2>Tic Tac Toe</h2>
-        <p>Guanya ficant 3 fitxes en línia. v2.1</p>
+        <p>Guanya ficant 3 fitxes en línia. v2.1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="TicTacToe.html"
@@ -191,11 +212,12 @@
           Jugar
         </a>
       </div>
-
       <!-- Quatre en Ratlla -->
-      <div class="card">
+      <div class="card" data-game="connect4">
         <h2>Quatre en Ratlla</h2>
-        <p>Tira fitxes i fica 4 fitxes en ratlla. v1.1</p>
+        <p>Tira fitxes i fica 4 fitxes en ratlla. v1.1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="QuatreEnRatlla.html"
@@ -205,11 +227,12 @@
           Jugar
         </a>
       </div>
-
       <!-- Tetris -->
-      <div class="card">
+      <div class="card" data-game="tetris">
         <h2>Tetris</h2>
-        <p>Col·loca les peces per fer la major puntuació possible. v1</p>
+        <p>Col·loca les peces per fer la major puntuació possible. v1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="Tetris.html"
@@ -219,11 +242,12 @@
           Jugar
         </a>
       </div>
-      
       <!-- Turbo Road -->
-      <div class="card">
+      <div class="card" data-game="turbo">
         <h2>Turbo Road</h2>
-        <p>Corre per la carretera sempre intentant no xocar. v1.1</p>
+        <p>Corre per la carretera sempre intentant no xocar. v1.1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="TurboRoad.html"
@@ -233,11 +257,12 @@
           Jugar
         </a>
       </div>
-      
       <!-- IQ Test -->
-      <div class="card">
+      <div class="card" data-game="iq">
         <h2>IQ Test</h2>
-        <p>Fes una prova de IQ precisa. v1.1</p>
+        <p>Fes una prova de IQ precisa. v1.1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="IQtest.html"
@@ -247,11 +272,12 @@
           Jugar
         </a>
       </div>
-      
       <!-- Busca mines -->
-      <div class="card">
+      <div class="card" data-game="mines">
         <h2>Busca mines</h2>
-        <p>Intenta completar la graella sense fer explotar cam mina. v1</p>
+        <p>Intenta completar la graella sense fer explotar cam mina. v1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="buscamines.html"
@@ -261,11 +287,12 @@
           Jugar
         </a>
       </div>
-                
       <!-- Pac-Man -->
-      <div class="card">
+      <div class="card" data-game="pacman">
         <h2>Pac-Man</h2>
-        <p>Intenta recolectar totes les monedes sense ser atrapat per un fantasma. v1</p>
+        <p>Intenta recolectar totes les monedes sense ser atrapat per un fantasma. v1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="Pac-Man.html"
@@ -275,11 +302,12 @@
           Jugar
         </a>
       </div>
-                
       <!-- Block Land -->
-      <div class="card">
+      <div class="card" data-game="blockland">
         <h2>Block Land</h2>
-        <p>Construeix el teu propi món en 3D. v2</p>
+        <p>Construeix el teu propi món en 3D. v2
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="Blockland.html"
@@ -289,11 +317,12 @@
           Jugar
         </a>
       </div>
-
       <!-- Escacs -->
-      <div class="card">
+      <div class="card" data-game="escacs">
         <h2>Escacs</h2>
-        <p>Juga contra un robot o amb un amic als escacs. v1</p>
+        <p>Juga contra un robot o amb un amic als escacs. v1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="Escacs.html"
@@ -303,12 +332,12 @@
           Jugar
         </a>
       </div>
-
-
       <!-- Plantes VS Robots -->
-      <div class="card">
+      <div class="card" data-game="plantes">
         <h2>Plantes VS Robots</h2>
-        <p>Vigila què els robots no t'envaeixin. v1</p>
+        <p>Vigila què els robots no t'envaeixin. v1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="PlantesVsRobots.html"
@@ -318,11 +347,12 @@
           Jugar
         </a>
       </div>
-
       <!-- MyGarden -->
-      <div class="card">
+      <div class="card" data-game="garden">
         <h2>MyGarden</h2>
-        <p>Fes creixer el teu propi hort. v1</p>
+        <p>Fes creixer el teu propi hort. v1
+          <span class="game-stars" role="img" aria-label="0 de 3 estrelles">☆☆☆</span>
+        </p>
         <a
           class="btn"
           href="MyGarden.html"
@@ -332,8 +362,6 @@
           Jugar
         </a>
       </div>
-
-
 
     </div>
   </div>
