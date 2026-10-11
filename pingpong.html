@@ -787,6 +787,35 @@
       }
     });
 
+    // ===== TROFEUS: el disseny original no es modifica =====
+    const PONG_TROPHY_KEY = "pongTrophyModesV1";
+    const PONG_LEVEL5_KEY = "pongTrophyLevel5V1";
+    function getPongModes() {
+      try {
+        const data = JSON.parse(localStorage.getItem(PONG_TROPHY_KEY) || "{}");
+        return {
+          classic: data.classic === true,
+          rapid: data.rapid === true,
+          long: data.long === true
+        };
+      } catch (e) { return { classic:false, rapid:false, long:false }; }
+    }
+    function updatePongTrophies(wonAgainstBot = false) {
+      if (!window.GameStars) return;
+      GameStars.report({ score: playerScore });
+      if (playerScore >= 1001) {
+        try { localStorage.setItem(PONG_LEVEL5_KEY, "true"); } catch(e) {}
+      }
+      const modes = getPongModes();
+      if (wonAgainstBot && ["classic", "rapid", "long"].includes(selectedMode)) {
+        modes[selectedMode] = true;
+        try { localStorage.setItem(PONG_TROPHY_KEY, JSON.stringify(modes)); } catch(e) {}
+      }
+      let level5 = playerScore >= 1001;
+      try { level5 = level5 || localStorage.getItem(PONG_LEVEL5_KEY) === "true"; } catch(e) {}
+      if (level5 && modes.classic && modes.rapid && modes.long) GameStars.complete();
+    }
+
     // ===== ESTAT DEL JOC =====
     let isPlaying = false;
     let isOnline = false;
@@ -1054,6 +1083,7 @@
       mainMenu.classList.add("hidden");
       endScreen.classList.add("hidden");
       isPlaying = true;
+      if (window.GameStars) GameStars.start();
     }
 
     function applyStreak(playerWon) {
@@ -1102,11 +1132,13 @@
 
     function endGame(winnerLabel, playerWonOnline) {
       isPlaying = false;
+      if (window.GameStars) GameStars.pause();
 
       let coinInfo = { gained: 0, raw: 0 };
       if (typeof playerWonOnline === "boolean") {
         applyStreak(playerWonOnline);
         updateOnlineScore(playerWonOnline);
+        updatePongTrophies(playerWonOnline);
         coinInfo = awardCoinsFromMatch();
       }
 
@@ -1139,6 +1171,7 @@
       resetScoresAndPositions();
       endScreen.classList.add("hidden");
       isPlaying = true;
+      if (window.GameStars) GameStars.start();
     });
 
     btnBackToMenu.addEventListener("click", () => { ensureAudio(); window.location.reload(); });
@@ -1296,6 +1329,11 @@
 
     // Start button state
     updateStartButtonState();
+  </script>
+  <script src="estrelles.js"></script>
+  <script>
+    // Comprova també els punts guardats de partides anteriors.
+    updatePongTrophies(false);
   </script>
 </body>
 </html>
