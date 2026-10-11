@@ -96,6 +96,29 @@
     </div>
 
     <script>
+      // Sistema d'estrelles integrat. Comparteix el progrés amb el catàleg de jocs.
+      window.GameStars = {
+        report({ level } = {}) {
+          const reached = Number(level);
+          if (!Number.isFinite(reached) || reached < 2) return;
+          const key = 'hipercasual:estrelles:v1:space';
+          try {
+            let previous = {};
+            try { previous = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch (_) {}
+            const progress = {
+              ...previous,
+              first: Boolean(previous.first) || reached >= 2,
+              middle: Boolean(previous.middle) || reached >= 3,
+              complete: Boolean(previous.complete) || reached >= 4
+            };
+            localStorage.setItem(key, JSON.stringify(progress));
+          } catch (_) {
+            // El joc continua funcionant encara que el navegador bloquegi localStorage.
+          }
+        }
+      };
+    </script>
+    <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
@@ -244,6 +267,7 @@
             bales = [];
             balesEnreres = [];
             nivell++;
+            if (window.GameStars) GameStars.report({ level: nivell });
             actualitzarUI();
 
             setTimeout(() => {
