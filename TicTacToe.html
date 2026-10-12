@@ -253,6 +253,58 @@
         [0,4,8], [2,4,6]           // Diagonals
     ];
 
+    // ===== ESTRELLES DEL CATÀLEG (sense modificar la interfície) =====
+    // 1 estrella: 5 victòries contra bots, acumulades.
+    // 2 estrelles: victòries contra bots en 4 modes diferents.
+    // 3 estrelles: guanyar en els 6 modes, contra bot difícil quan existeix.
+    // Només Memòria ofereix un bot fàcil; per tant, en aquest mode també compta.
+    const TIC_STARS_KEY = 'hipercasual:estrelles:v1:tictactoe';
+    const TIC_MODES = ['classic', 'infinite', 'obstacle', 'memory', 'blitz', 'inverse'];
+
+    function llegirEstrellesTic() {
+        try {
+            const dades = JSON.parse(localStorage.getItem(TIC_STARS_KEY) || '{}');
+            if (dades && typeof dades === 'object' && !Array.isArray(dades)) return dades;
+        } catch (_) { /* Si hi havia dades malformades, comencem un registre nou. */ }
+        return {};
+    }
+
+    // Les victòries es registren quan realment s'acaba una partida guanyada.
+    function registrarVictoriaTic(mode, opponent) {
+        if (!TIC_MODES.includes(mode) || !opponent.startsWith('bot')) return;
+        try {
+            const anterior = llegirEstrellesTic();
+            const victories = Math.max(0, Math.floor(Number(anterior.botWins) || 0)) + 1;
+            const modes = Array.isArray(anterior.wonModes)
+                ? anterior.wonModes.filter(m => TIC_MODES.includes(m)) : [];
+            const modesDificils = Array.isArray(anterior.hardWonModes)
+                ? anterior.hardWonModes.filter(m => TIC_MODES.includes(m)) : [];
+            if (!modes.includes(mode)) modes.push(mode);
+            if (opponent === 'bot-hard' || (mode === 'memory' && opponent === 'bot-easy')) {
+                if (!modesDificils.includes(mode)) modesDificils.push(mode);
+            }
+
+            const tercera = Boolean(anterior.complete) || TIC_MODES.every(m => modesDificils.includes(m));
+            const segona = tercera || Boolean(anterior.middle) || modes.length >= 4;
+            const primera = segona || Boolean(anterior.first) || victories >= 5;
+
+            // Compatibilitat amb el catàleg actual: la primera estrella es llegeix
+            // de seconds >= 900, però aquí representa el repte de victòries, no temps.
+            const segons = primera ? Math.max(900, Number(anterior.seconds) || 0)
+                                   : Math.max(0, Number(anterior.seconds) || 0);
+            localStorage.setItem(TIC_STARS_KEY, JSON.stringify({
+                ...anterior,
+                botWins: victories,
+                wonModes: modes,
+                hardWonModes: modesDificils,
+                first: primera,
+                middle: segona,
+                complete: tercera,
+                seconds: segons
+            }));
+        } catch (_) { /* Si l'emmagatzematge no està disponible, la partida continua. */ }
+    }
+
     function init() {
         updateCoins();
         document.getElementById('current-symbol-display').innerText = mySymbol;
@@ -552,6 +604,7 @@
                     if (['blitz', 'inverse'].includes(currentVariant)) reward += 20;
 
                     coins += reward; updateCoins();
+                    registrarVictoriaTic(currentVariant, currentOpponent);
                     document.getElementById('status').innerText = `🏆 Has guanyat! +${reward} 🪙`;
                     document.getElementById('status').style.color = '#FFD700';
                 } else {
