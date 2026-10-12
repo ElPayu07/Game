@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clicker de Galetes</title>
+    <title>Clicker de Galetes - Super Botiga</title>
     <style>
         * {
             margin: 0;
@@ -660,8 +660,10 @@
             if (pestanya === 'assoliments') renderitzatAssoliments();
         }
 
-        // ESTRELLES DEL CATÀLEG: 1M, 1Qi i 1Dc de galetes acumulades.
-        // Sistema integrat al mateix HTML, independent dels 19 assoliments.
+        // ESTRELLES DEL CATÀLEG (integrades, sense fitxers addicionals).
+        // Compatible amb el catàleg existent, que identifica la primera
+        // estrella amb el camp "seconds" i les altres amb middle/complete.
+        // Només es desa en desbloquejar una fita, no 10 vegades per segon.
         function registrarEstrellesCookie() {
             const clau = 'hipercasual:estrelles:v1:cookie';
             try {
@@ -671,23 +673,33 @@
                     if (desat && typeof desat === 'object' && !Array.isArray(desat)) {
                         anterior = desat;
                     }
-                } catch (_) { /* Ignorem dades antigues invàlides. */ }
+                } catch (_) { /* Recupera registres invàlids. */ }
 
-                const total = galetesTotalsAcumulades;
-                const progres = {
-                    ...anterior,
-                    first: Boolean(anterior.first) || total >= 1e6,
-                    middle: Boolean(anterior.middle) || total >= 1e18,
-                    complete: Boolean(anterior.complete) || total >= 1e33,
-                    cookies: Math.max(Number(anterior.cookies) || 0, total)
-                };
-                if (progres.first !== anterior.first ||
-                    progres.middle !== anterior.middle ||
-                    progres.complete !== anterior.complete ||
-                    progres.cookies !== anterior.cookies) {
-                    localStorage.setItem(clau, JSON.stringify(progres));
+                const total = Number(galetesTotalsAcumulades) || 0;
+                const primera = Boolean(anterior.first) || total >= 1e6;
+                const segona = Boolean(anterior.middle) || total >= 1e18;
+                const tercera = Boolean(anterior.complete) || total >= 1e33;
+
+                // El catàleg antic mostra la primera estrella si seconds >= 900.
+                // No significa que calgui esperar 15 minuts: la fita real és 1 M.
+                const segonsAnteriors = Math.max(0, Number(anterior.seconds) || 0);
+                const segons = primera || segona || tercera
+                    ? Math.max(900, segonsAnteriors) : segonsAnteriors;
+
+                if (primera !== Boolean(anterior.first) ||
+                    segona !== Boolean(anterior.middle) ||
+                    tercera !== Boolean(anterior.complete) ||
+                    segons !== segonsAnteriors) {
+                    localStorage.setItem(clau, JSON.stringify({
+                        ...anterior,
+                        first: primera || segona || tercera,
+                        middle: segona || tercera,
+                        complete: tercera,
+                        seconds: segons,
+                        cookies: Math.max(Number(anterior.cookies) || 0, total)
+                    }));
                 }
-            } catch (_) { /* El joc continua si localStorage no està disponible. */ }
+            } catch (_) { /* Si localStorage no està disponible, el joc segueix. */ }
         }
 
         function comprovarAssoliments() {
