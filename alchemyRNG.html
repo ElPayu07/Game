@@ -213,6 +213,47 @@
         bestAura: {n: "-", r: 0, c: "#fff"} // Persistent Record
     };
 
+    // ===== ESTRELLES DEL CATÀLEG =====
+    // 1: Gold (1/25.000) · 2: Void (1/10.000.000) · 3: ZENITH (1/100.000.000).
+    // Es fan servir les dades de la millor aura de tots els temps, no l'inventari:
+    // les aures gastades en alquímia també compten.
+    const ALCHEMY_STARS_KEY = 'hipercasual:estrelles:v1:alchemy';
+
+    function registrarEstrellesAlchemy() {
+        const raresa = Math.max(0, Number(state.bestAura?.r) || 0);
+        if (raresa < 25000) return;
+        try {
+            let anterior = {};
+            try {
+                const dades = JSON.parse(localStorage.getItem(ALCHEMY_STARS_KEY) || '{}');
+                if (dades && typeof dades === 'object' && !Array.isArray(dades)) anterior = dades;
+            } catch (_) { /* Si el registre era invàlid, el recuperem. */ }
+
+            const tercera = Boolean(anterior.complete) || raresa >= 100000000;
+            const segona = tercera || Boolean(anterior.middle) || raresa >= 10000000;
+            const primera = segona || Boolean(anterior.first) || raresa >= 25000;
+            // Compatibilitat amb el catàleg existent, que llegeix la primera
+            // estrella a partir de seconds >= 900.
+            const segons = primera ? Math.max(900, Number(anterior.seconds) || 0) : (Number(anterior.seconds) || 0);
+            const millorAnterior = Number(anterior.bestRarity) || 0;
+
+            if (Boolean(anterior.first) !== primera ||
+                Boolean(anterior.middle) !== segona ||
+                Boolean(anterior.complete) !== tercera ||
+                (Number(anterior.seconds) || 0) !== segons ||
+                raresa > millorAnterior) {
+                localStorage.setItem(ALCHEMY_STARS_KEY, JSON.stringify({
+                    ...anterior,
+                    first: primera,
+                    middle: segona,
+                    complete: tercera,
+                    seconds: segons,
+                    bestRarity: Math.max(millorAnterior, raresa)
+                }));
+            }
+        } catch (_) { /* Si localStorage està restringit, el joc segueix funcionant. */ }
+    }
+
     function roll() {
         const baseLuck = 1 + (state.luckLevel - 1) * 0.5 + state.permCraftLuck;
         const totalLuck = baseLuck * state.potMult;
@@ -228,6 +269,7 @@
         // Update Record if this is rarer than the previous Best Find
         if (selected.r > state.bestAura.r) {
             state.bestAura = {...selected};
+            registrarEstrellesAlchemy();
         }
 
         state.coins += Math.floor(Math.log10(selected.r) * 5) + 1;
@@ -416,6 +458,7 @@
         if (s) {
             state = JSON.parse(s);
             state.auto = false;
+            registrarEstrellesAlchemy(); // Reconeix també el rècord de partides anteriors.
             renderInventory(); updateUI();
             document.getElementById('luck-cost').innerText = `Cost: ${Math.floor(100 * Math.pow(2.5, state.luckLevel - 1)).toLocaleString()}`;
         }
