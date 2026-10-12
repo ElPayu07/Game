@@ -211,6 +211,48 @@
         let jocActiu = true;
         let botPensant = false;
 
+        // ===== ESTRELLES DEL CATÀLEG (integrades al joc) =====
+        // ⭐ 10 victòries contra qualsevol bot (acumulades).
+        // ⭐⭐ 5 victòries contra el bot Difícil (acumulades).
+        // ⭐⭐⭐ 1 victòria contra el bot Expert.
+        // Les partides de 2 jugadors, els empats i les derrotes no compten.
+        const CLAU_ESTRELLES_QUATRE = 'hipercasual:estrelles:v1:connect4';
+
+        function registrarVictoriaQuatre(dificultat) {
+            if (selectorMode.value !== '1p') return;
+            try {
+                let anterior = {};
+                try {
+                    const dades = JSON.parse(localStorage.getItem(CLAU_ESTRELLES_QUATRE) || '{}');
+                    if (dades && typeof dades === 'object' && !Array.isArray(dades)) anterior = dades;
+                } catch (_) { /* No bloquegem la partida per dades antigues malformades. */ }
+
+                const comptar = (valor) => Math.max(0, Math.floor(Number(valor) || 0));
+                const victories = comptar(anterior.botWins) + 1;
+                const victoriesDificil = comptar(anterior.hardWins) + (dificultat === 'dificil' ? 1 : 0);
+                const victoriesExpert = comptar(anterior.expertWins) + (dificultat === 'expert' ? 1 : 0);
+
+                // El catàleg mostra les fites superiors com a 3/3, 2/3, etc.
+                const tercera = Boolean(anterior.complete) || victoriesExpert >= 1;
+                const segona = Boolean(anterior.middle) || victoriesDificil >= 5 || tercera;
+                const primera = Boolean(anterior.first) || victories >= 10 || segona;
+
+                // El catàleg existent consulta `seconds >= 900` per mostrar
+                // la primera estrella: aquesta compatibilitat NO compta minuts.
+                const segons = Math.max(comptar(anterior.seconds), primera ? 900 : 0);
+                localStorage.setItem(CLAU_ESTRELLES_QUATRE, JSON.stringify({
+                    ...anterior,
+                    botWins: victories,
+                    hardWins: victoriesDificil,
+                    expertWins: victoriesExpert,
+                    first: primera,
+                    middle: segona,
+                    complete: tercera,
+                    seconds: segons
+                }));
+            } catch (_) { /* Si localStorage està bloquejat, el joc segueix funcionant. */ }
+        }
+
         function canviarMode() {
             if (selectorMode.value === '2p') {
                 divDificultat.style.display = 'none';
@@ -450,6 +492,10 @@
         }
 
         function finalitzarJoc(resultat) {
+            // Únic punt on es registra una victòria real contra el bot.
+            if (jocActiu && selectorMode.value === '1p' && resultat === 'vermell') {
+                registrarVictoriaQuatre(selectorDificultat.value);
+            }
             jocActiu = false;
             botPensant = false;
             if (resultat === 'empat') {
