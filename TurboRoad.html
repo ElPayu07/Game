@@ -304,6 +304,44 @@ let gameRunning = true;
 let isModalOpen = false;
 let framesSurvived = 0;
 let score = 0;
+
+// ===== ESTRELLES DEL CATÀLEG: TURBO ROAD =====
+// ⭐ 3.000 punts; ⭐⭐ 6.000 punts; ⭐⭐⭐ 10.000 punts.
+// Cada repte es fa en una sola partida. Els trofeus es conserven per sempre.
+const CLAU_ESTRELLES_TURBO = 'hipercasual:estrelles:v1:turbo';
+let darreraFitaTurbo = 0;
+
+function registrarEstrellesTurbo(puntuacio) {
+  const fita = puntuacio >= 10000 ? 3 : puntuacio >= 6000 ? 2 : puntuacio >= 3000 ? 1 : 0;
+  if (fita <= darreraFitaTurbo) return;
+  darreraFitaTurbo = fita;
+  if (!fita) return;
+
+  try {
+    let anterior = {};
+    try {
+      const dades = JSON.parse(localStorage.getItem(CLAU_ESTRELLES_TURBO) || '{}');
+      if (dades && typeof dades === 'object' && !Array.isArray(dades)) anterior = dades;
+    } catch (_) { /* Dades malformades: el joc continua. */ }
+
+    const record = Math.max(Number(anterior.bestScore) || 0, puntuacio);
+    const tercera = Boolean(anterior.complete) || record >= 10000;
+    const segona = Boolean(anterior.middle) || record >= 6000 || tercera;
+    const primera = Boolean(anterior.first) || record >= 3000 || segona;
+
+    // El catàleg actual fa servir seconds >= 900 per a la primera estrella.
+    // Aquesta compatibilitat no representa temps real de joc.
+    localStorage.setItem(CLAU_ESTRELLES_TURBO, JSON.stringify({
+      ...anterior,
+      bestScore: record,
+      first: primera,
+      middle: segona,
+      complete: tercera,
+      seconds: Math.max(Number(anterior.seconds) || 0, primera ? 900 : 0)
+    }));
+  } catch (_) { /* Si l'emmagatzematge falla, es pot continuar jugant. */ }
+}
+
 let activeShields = 0;
 let baseSpeed = 7;
 let currentSpeed = baseSpeed;
@@ -398,6 +436,7 @@ function update() {
   
   score += (cotxe.id === 'magnet' || cotxe.id === 'gold') ? 2 : 1;
   scoreEl.textContent = score;
+  registrarEstrellesTurbo(score);
 
   currentSpeed = baseSpeed + (framesSurvived / 400);
   roadOffset += currentSpeed;
@@ -485,7 +524,7 @@ function actualitzarUIEscuts() {
 }
 
 function restartGame() {
-  score = 0; framesSurvived = 0; currentSpeed = baseSpeed; roadOffset = 0;
+  score = 0; darreraFitaTurbo = 0; framesSurvived = 0; currentSpeed = baseSpeed; roadOffset = 0;
   enemies = []; enemyTimer = 0;
   player.carrilActual = 1; player.targetX = getPosicioCarril(1); player.x = player.targetX;
   
