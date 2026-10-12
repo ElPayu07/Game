@@ -468,7 +468,10 @@
                     ...anterior,
                     first: Boolean(anterior.first) || nivellAssolit >= 3,
                     middle: Boolean(anterior.middle) || nivellAssolit >= 6,
-                    complete: Boolean(anterior.complete) || nivellAssolit >= 10
+                    complete: Boolean(anterior.complete) || nivellAssolit >= 10,
+                    // Compatibilitat amb el catàleg actual: la primera estrella
+                    // es representa amb seconds >= 900, però el repte real és el nivell 3.
+                    seconds: Math.max(Number(anterior.seconds) || 0, 900)
                 };
                 localStorage.setItem(clau, JSON.stringify(progres));
             } catch (err) { /* Sense localStorage, el joc continua funcionant. */ }
@@ -1031,6 +1034,9 @@
         
         window.addEventListener('load', () => {
             loadSavedData(); // Carrega el progrés guardat
+            // Reconeix el millor nivell d'una partida anterior.
+            const nivellRecord = Math.floor((Number(highScore) || 0) / 100) + 1;
+            if (nivellRecord >= 3) registrarEstrellesSnake(nivellRecord);
             updateCanvasSize();
             highScoreElement.textContent = highScore;
             updateStatsUI();
