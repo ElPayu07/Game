@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Joc de pescar (5 capes + pop)</title>
+  <title>Joc de pescar</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -213,7 +213,7 @@
   const STAR_STORAGE_KEY = 'hipercasual:estrelles:v1:fishing';
   function registrarEstrellesFishing(puntuacio) {
     const millor = Math.max(0, Number(puntuacio) || 0, Number(state.best) || 0);
-    if (millor < 400) return;
+    if (millor < 500) return;
     try {
       let anterior = {};
       try {
@@ -221,9 +221,9 @@
         if (llegit && typeof llegit === 'object' && !Array.isArray(llegit)) anterior = llegit;
       } catch (_) { /* Dades malformades: podem recuperar el progrés pel rècord. */ }
 
-      const tercera = Boolean(anterior.complete) || millor >= 600;
-      const segona = tercera || Boolean(anterior.middle) || millor >= 500;
-      const primera = segona || Boolean(anterior.first) || millor >= 400;
+      const tercera = Boolean(anterior.complete) || millor >= 800;
+      const segona = tercera || Boolean(anterior.middle) || millor >= 700;
+      const primera = segona || Boolean(anterior.first) || millor >= 500;
       // La versió actual del catàleg llegeix la primera estrella del camp seconds.
       // Aquí seconds=900 només representa haver superat 400 punts; no exigeix temps.
       const segons = primera ? Math.max(900, Number(anterior.seconds) || 0) : (Number(anterior.seconds) || 0);
