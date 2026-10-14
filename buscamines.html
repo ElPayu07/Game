@@ -167,6 +167,48 @@
   let cfg, cells=[], mineSet=new Set(), flags=new Set();
   let started=false, over=false, mode='open', timer=0, timerId=null;
   let moves=0, combo=0, soundOn=true;
+  let pistesUtilitzades=false;
+  // ===== ESTRELLES DEL CATÀLEG — BUSCA MINES =====
+  // ⭐ Guanyar en mode Mitjà.
+  // ⭐⭐ Guanyar en mode Difícil.
+  // ⭐⭐⭐ Guanyar en mode Expert sense fer servir pistes.
+  // Cada fita es desa permanentment, fins i tot si es completa fora d'ordre.
+  const CLAU_ESTRELLES_MINES = 'hipercasual:estrelles:v1:mines';
+
+  function registrarVictoriaBuscaMines(dificultat, sensePistes){
+    if(!['medium','hard','expert'].includes(dificultat)) return;
+    try{
+      let anterior = {};
+      try{
+        const desat = JSON.parse(localStorage.getItem(CLAU_ESTRELLES_MINES) || '{}');
+        if(desat && typeof desat === 'object' && !Array.isArray(desat)) anterior = desat;
+      }catch(_){ /* No interrompre el joc si hi ha dades malformades. */ }
+
+      const mitjaSuperada = Boolean(anterior.mediumWon) || dificultat === 'medium';
+      const dificilSuperada = Boolean(anterior.hardWon) || dificultat === 'hard';
+      const expertSensePistes = Boolean(anterior.expertNoHintsWon) ||
+        (dificultat === 'expert' && sensePistes);
+
+      // L'ordre visual del catàleg és sempre ⭐, ⭐⭐, ⭐⭐⭐.
+      const primera = Boolean(anterior.first) || mitjaSuperada;
+      const segona = Boolean(anterior.middle) || (primera && dificilSuperada);
+      const tercera = Boolean(anterior.complete) || (segona && expertSensePistes);
+
+      localStorage.setItem(CLAU_ESTRELLES_MINES, JSON.stringify({
+        ...anterior,
+        mediumWon: mitjaSuperada,
+        hardWon: dificilSuperada,
+        expertNoHintsWon: expertSensePistes,
+        first: primera,
+        middle: segona,
+        complete: tercera,
+        // Compatibilitat amb la primera estrella del catàleg existent.
+        // Aquesta xifra indica la fita, no el temps real jugat.
+        seconds: Math.max(Number(anterior.seconds) || 0, primera ? 900 : 0)
+      }));
+    }catch(_){ /* El joc continua si el navegador bloqueja localStorage. */ }
+  }
+
 
   function beep(freq=440,duration=.06,type='sine'){
     if(!soundOn) return;
@@ -205,7 +247,7 @@
   function newGame(){
     stopTimer();
     cfg=configs[difficultyEl.value];
-    started=false; over=false; timer=0; moves=0; combo=0; flags.clear(); mineSet.clear();
+    started=false; over=false; timer=0; moves=0; combo=0; pistesUtilitzades=false; flags.clear(); mineSet.clear();
     timerEl.textContent='000'; movesEl.textContent='0'; comboEl.textContent='0×';
     minesLeftEl.textContent=cfg.mines;
     messageEl.innerHTML='Obre una casella per començar. <strong>La primera sempre és segura.</strong>';
@@ -302,6 +344,7 @@
     const safe=cells.filter(c=>!mineSet.has(c.i));
     if(safe.every(c=>c.open)){
       over=true; stopTimer();
+      registrarVictoriaBuscaMines(difficultyEl.value, !pistesUtilitzades);
       boardEl.classList.add('win-glow');
       mineSet.forEach(i=>{cells[i].flag=true;flags.add(i);renderCell(cells[i])});
       minesLeftEl.textContent='0';
@@ -312,6 +355,7 @@
 
   function hint(){
     if(over) return;
+    pistesUtilitzades=true;
     const candidates=cells.filter(c=>!c.open&&!c.flag);
     if(!candidates.length) return;
     let safeCandidate=null;
