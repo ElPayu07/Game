@@ -1059,6 +1059,61 @@ const questions = [
 ];
 
 
+/* ESTRELLES DEL CATÀLEG — IQ TEST
+   ⭐ 9/9 en el test curt; ⭐⭐ 18/18 en el mitjà;
+   ⭐⭐⭐ 34/36 en el complet. Cada repte es registra per separat.
+   El catàleg mostra les estrelles en ordre, sense perdre reptes assolits
+   en un altre ordre. No s'alteren les preguntes ni el càlcul de l'IQ.
+*/
+const CLAU_ESTRELLES_IQ = 'hipercasual:estrelles:v1:iq';
+
+function registrarEstrellesIQ(mode, encerts) {
+    if (![9, 18, 36].includes(mode) || !Number.isFinite(encerts)) return;
+
+    try {
+        let anterior = {};
+        try {
+            const dades = JSON.parse(localStorage.getItem(CLAU_ESTRELLES_IQ) || '{}');
+            if (dades && typeof dades === 'object' && !Array.isArray(dades)) {
+                anterior = dades;
+            }
+        } catch (_) { /* Dades incompletes o malformades: el test continua. */ }
+
+        const millors = anterior.bestCorrectByMode &&
+            typeof anterior.bestCorrectByMode === 'object' &&
+            !Array.isArray(anterior.bestCorrectByMode)
+            ? anterior.bestCorrectByMode : {};
+
+        const actualitzat = {
+            ...millors,
+            [mode]: Math.max(0, Number(millors[mode]) || 0, encerts)
+        };
+        const curt = Boolean(anterior.shortPassed) || (mode === 9 && encerts === 9);
+        const mitja = Boolean(anterior.mediumPassed) || (mode === 18 && encerts === 18);
+        const complet = Boolean(anterior.fullPassed) || (mode === 36 && encerts >= 34);
+
+        // El catàleg mostra 0, 1, 2 o 3 estrelles consecutives.
+        // Els reptes complerts fora d'ordre queden desats fins que arribi el torn.
+        const primera = Boolean(anterior.first) || curt;
+        const segona = Boolean(anterior.middle) || (primera && mitja);
+        const tercera = Boolean(anterior.complete) || (segona && complet);
+
+        localStorage.setItem(CLAU_ESTRELLES_IQ, JSON.stringify({
+            ...anterior,
+            bestCorrectByMode: actualitzat,
+            shortPassed: curt,
+            mediumPassed: mitja,
+            fullPassed: complet,
+            first: primera,
+            middle: segona,
+            complete: tercera,
+            // Compatibilitat: el catàleg actual detecta la primera estrella
+            // amb seconds >= 900. Aquí és una fita, no temps de joc.
+            seconds: Math.max(Number(anterior.seconds) || 0, primera ? 900 : 0)
+        }));
+    } catch (_) { /* Si localStorage no està disponible, el test continua. */ }
+}
+
 /* ESTAT DEL JOC */
 
 const state = {
@@ -1517,6 +1572,8 @@ function finish() {
 
     $("resultText").textContent =
         `Mode ${getModeName(total)}. Has encertat ${correct} de ${total} preguntes. Aquesta puntuació és una estimació orientativa i no substitueix un test d'IQ estandarditzat.`;
+
+    registrarEstrellesIQ(total, correct);
 }
 
 
