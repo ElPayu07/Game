@@ -61,6 +61,7 @@ function applyVisual(save=false){document.documentElement.setAttribute('data-the
 applyVisual();
 let s=E.initial(),states=[],logs=[],keys=[E.key(s)],moves=E.legal(s),selected=-1,last=null,flipped=false,config={mode:'bot',side:'w',level:2},busy=false,over=false,worker=null,job=0,pending=null,endShown=false;
 let engineError='',enginePhase='',sfSource=null,sfTimer=null,sfAbort=null,sfBlob=null;
+let victoriaComptadaEnAquestaPartida=false;
 const square=i=>'abcdefgh'[i%8]+(8-(i>>3));
 function result(){if(!moves.length)return E.check(s)?'Escac i mat · '+(s.turn==='w'?'guanyen les negres':'guanyen les blanques'):'Taules per ofegat';if(E.insufficient(s))return 'Taules · material insuficient';if(s.half>=100)return 'Taules · regla dels 50 moviments';if(keys.filter(k=>k===keys[keys.length-1]).length>=3)return 'Taules · triple repetició';return '';}
 const bots=[null,{name:'Llavor',elo:400,description:'Comença a descobrir els escacs: sovint deixa peces desprotegides.'},{name:'Aprenent',elo:650,description:'Busca captures senzilles, però encara comet força errors.'},{name:'Explorador',elo:850,description:'Comença a anticipar la teva resposta.'},{name:'Estratega',elo:1050,description:'Calcula respostes i juga amb més regularitat.'},{name:'Cavaller',elo:1250,description:'Busca avantatges materials amb més profunditat.'},{name:'Torre',elo:1450,description:'Dedica més temps a revisar les seves jugades.'},{name:'Dama',elo:1650,description:'Calcula variants més llargues i pren menys riscos.'},{name:'Monarca',elo:1850,description:'El repte màxim del motor local: més temps i profunditat de càlcul.'},{name:'Mestre · Stockfish',elo:2100,skill:12,time:1500,description:'Motor Stockfish real. Nivell mestre orientatiu; uns 1,5 segons de càlcul per jugada. Cal internet per carregar-lo.'},{name:'Gran mestre · Stockfish',elo:2500,skill:20,time:4000,description:'Stockfish sense reducció de destresa. Uns 4 segons per jugada. Elo orientatiu; la força depèn del dispositiu. Cal internet per carregar-lo.'}];
@@ -69,8 +70,42 @@ function render(){let end=result();over=!!end;$('status').textContent=end|| (eng
 $('board').replaceChildren();for(let pos=0;pos<64;pos++){let i=flipped?63-pos:pos,p=s.b[i],btn=document.createElement('button');btn.type='button';btn.className='sq'+(((i>>3)+i%8)%2?' dark':'')+(p?' occupied':'')+(last&&(i===last.f||i===last.t)?' last':'')+(i===selected?' selected':'')+(moves.some(m=>m.f===selected&&m.t===i)?' legal':'')+(p&&p.toLowerCase()==='k'&&E.color(p)===s.turn&&E.check(s)?' check':'');btn.setAttribute('aria-label',square(i)+(p?' '+names[p.toLowerCase()]+' '+(E.color(p)==='w'?'blanc':'negre'):''));if(p){btn.append(pieceElement(p.toLowerCase(),E.color(p)));}if(pos>=56){let c=document.createElement('span');c.className='coord file';c.textContent=square(i)[0];btn.append(c);}if(pos%8===0){let c=document.createElement('span');c.className='coord rank';c.textContent=square(i)[1];btn.append(c);}btn.onclick=()=>select(i);$('board').append(btn);}
 $('moves').innerHTML='';if(!logs.length)$('moves').innerHTML='<div class="sub">La història de la partida comença aquí.</div>';for(let i=0;i<logs.length;i+=2){let row=document.createElement('div');row.className='move-row';for(let v of [(i/2+1)+'.',logs[i].text,logs[i+1]?.text||'']){let span=document.createElement('span');span.textContent=v;row.append(span);}$('moves').append(row);}$('moves').scrollTop=$('moves').scrollHeight;$('undo').disabled=!states.length;$('showResult').hidden=!over;$('retryEngine').hidden=!engineError;if(over&&!endShown){endShown=true;showEnding();}
 }
+// ===== ESTRELLES DEL CATALEG (sense modificar l'aparença) =====
+// ⭐ 3 victòries; ⭐⭐ 8 victòries; ⭐⭐⭐ 15 victòries.
+// Només es compten els escacs i mat guanyats contra bots de més de 800 Elo.
+// El recompte és acumulatiu entre partides i permanent entre sessions.
+const CLAU_ESTRELLES_ESCACS = 'hipercasual:estrelles:v1:escacs';
+function registrarVictoriaEscacs(){
+  if (victoriaComptadaEnAquestaPartida || config.mode !== 'bot' ||
+      !bots[config.level] || bots[config.level].elo <= 800) return;
+  victoriaComptadaEnAquestaPartida = true;
+  try {
+    let anterior = {};
+    try {
+      const llegit = JSON.parse(localStorage.getItem(CLAU_ESTRELLES_ESCACS) || '{}');
+      if (llegit && typeof llegit === 'object' && !Array.isArray(llegit)) anterior = llegit;
+    } catch (_) { /* El joc segueix encara que les dades siguin incorrectes. */ }
+    const enterNoNegatiu = v => Math.max(0, Math.floor(Number(v) || 0));
+    const victories = enterNoNegatiu(anterior.botWinsOver800) + 1;
+    const tercera = Boolean(anterior.complete) || victories >= 15;
+    const segona = Boolean(anterior.middle) || victories >= 8 || tercera;
+    const primera = Boolean(anterior.first) || victories >= 3 || segona;
+    // Compatibilitat amb el catàleg existent, que mostra la primera
+    // estrella quan seconds >= 900; aquests segons NO són temps de joc.
+    const segons = Math.max(enterNoNegatiu(anterior.seconds), primera ? 900 : 0);
+    localStorage.setItem(CLAU_ESTRELLES_ESCACS, JSON.stringify({
+      ...anterior,
+      botWinsOver800: victories,
+      first: primera,
+      middle: segona,
+      complete: tercera,
+      seconds: segons
+    }));
+  } catch (_) { /* Si no es pot desar, la partida no es bloqueja. */ }
+}
 function showEnding(){
 let mate=!moves.length&&E.check(s),winner=mate?E.opp(s.turn):null,kind=!mate?'draw':config.mode==='local'||winner===config.side?'win':'loss';
+if(mate&&config.mode==='bot'&&winner===config.side)registrarVictoriaEscacs();
 $('ending').className=kind;$('endIcon').textContent=kind==='win'?'♛':kind==='loss'?'♚':'½';
 $('endTitle').textContent=kind==='draw'?'Partida empatada':config.mode==='local'?'Guanyen les '+(winner==='w'?'blanques!':'negres!'):kind==='win'?'Has guanyat!':'Has perdut';
 $('endText').textContent=kind==='draw'?result()+'. Un bon moment per a la revenja.':config.mode==='local'?'Escac i mat. Una bona partida es mereix una altra!':kind==='win'?'Escac i mat! Has superat '+bots[config.level].name+' · '+bots[config.level].elo+' Elo orientatius.':'Escac i mat. '+bots[config.level].name+' ha guanyat aquesta vegada. Torna-ho a provar!';
@@ -105,6 +140,6 @@ else if(line.startsWith('bestmove ')&&phase==='search'){phase='done';const uci=l
 $('retryEngine').onclick=()=>{stop();schedule();};
 function fallback(id){setTimeout(()=>{if(id!==job)return;let m=E.choose(s,config.level);busy=false;if(m)play(m);},60);}
 $('promotion').addEventListener('cancel',()=>{pending=null;});$('mode').onchange=()=>{$('botOptions').style.display=$('mode').value==='bot'?'block':'none';};
-$('new').onclick=()=>{if(logs.length&&!over&&!confirm('Vols començar una partida nova? Es perdrà la partida actual.'))return;stop();config={mode:$('mode').value,side:$('side').value,level:+$('level').value};$('ending').close();endShown=false;s=E.initial();states=[];logs=[];keys=[E.key(s)];moves=E.legal(s);selected=-1;last=null;flipped=config.mode==='bot'&&config.side==='b';pending=null;$('promotion').close();render();schedule();};
+$('new').onclick=()=>{if(logs.length&&!over&&!confirm('Vols començar una partida nova? Es perdrà la partida actual.'))return;stop();victoriaComptadaEnAquestaPartida=false;config={mode:$('mode').value,side:$('side').value,level:+$('level').value};$('ending').close();endShown=false;s=E.initial();states=[];logs=[];keys=[E.key(s)];moves=E.legal(s);selected=-1;last=null;flipped=config.mode==='bot'&&config.side==='b';pending=null;$('promotion').close();render();schedule();};
 $('undo').onclick=()=>{$('ending').close();endShown=false;stop();if(!states.length)return;do{s=states.pop();logs.pop();keys.pop();}while(config.mode==='bot'&&s.turn!==config.side&&states.length);moves=E.legal(s);last=logs.at(-1)?.m||null;selected=-1;render();schedule();};$('flip').onclick=()=>{flipped=!flipped;render();};for(let [id,key] of [['pieceStyle','pieces'],['boardStyle','board'],['themeMode','theme']])$(id).onchange=()=>{visual[key]=$(id).value;applyVisual(true);render();if(pending){for(let [i,b] of Array.from($('choices').children).entries()){b.replaceChildren();b.append(pieceElement(pending[i].p,s.turn));}}};render();
 </script></body></html>
