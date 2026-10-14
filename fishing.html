@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Joc de pescar</title>
+  <title>Joc de pescar (5 capes + pop)</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -208,36 +208,31 @@
   ui.best.textContent = state.best;
 
   // ===== ESTRELLES DEL CATÀLEG (integrades al mateix HTML) =====
-  // Objectius: 400, 500 i 600 punts en una sola partida.
-  // La puntuació màxima ja existent permet conservar les estrelles després de reiniciar.
+  // Objectius nous: 600, 700 i 850 punts en una sola partida.
+  // Es fa servir el rècord permanent; les antigues fites inferiors no compten.
   const STAR_STORAGE_KEY = 'hipercasual:estrelles:v1:fishing';
   function registrarEstrellesFishing(puntuacio) {
-    const millor = Math.max(0, Number(puntuacio) || 0, Number(state.best) || 0);
-    if (millor < 500) return;
     try {
       let anterior = {};
       try {
         const llegit = JSON.parse(localStorage.getItem(STAR_STORAGE_KEY) || '{}');
         if (llegit && typeof llegit === 'object' && !Array.isArray(llegit)) anterior = llegit;
-      } catch (_) { /* Dades malformades: podem recuperar el progrés pel rècord. */ }
+      } catch (_) { /* Recuperar el progrés a partir del rècord desat. */ }
 
-      const tercera = Boolean(anterior.complete) || millor >= 800;
-      const segona = tercera || Boolean(anterior.middle) || millor >= 700;
-      const primera = segona || Boolean(anterior.first) || millor >= 500;
-      // La versió actual del catàleg llegeix la primera estrella del camp seconds.
-      // Aquí seconds=900 només representa haver superat 400 punts; no exigeix temps.
-      const segons = primera ? Math.max(900, Number(anterior.seconds) || 0) : (Number(anterior.seconds) || 0);
-      const millorAnterior = Number(anterior.bestScore) || 0;
+      const millor = Math.max(0, Number(puntuacio) || 0, Number(state.best) || 0,
+                              Number(anterior.bestScore) || 0);
+      const primera = millor >= 600;
+      const segona = millor >= 700;
+      const tercera = millor >= 850;
+      // El catàleg actual interpreta seconds >= 900 com la primera estrella.
+      // No representa temps jugat: és només compatibilitat amb el catàleg.
+      const segons = primera ? 900 : 0;
       if (Boolean(anterior.first) !== primera || Boolean(anterior.middle) !== segona ||
           Boolean(anterior.complete) !== tercera || Number(anterior.seconds || 0) !== segons ||
-          millor > millorAnterior) {
+          Number(anterior.bestScore || 0) !== millor) {
         localStorage.setItem(STAR_STORAGE_KEY, JSON.stringify({
-          ...anterior,
-          first: primera,
-          middle: segona,
-          complete: tercera,
-          seconds: segons,
-          bestScore: Math.max(millorAnterior, millor)
+          ...anterior, first: primera, middle: segona, complete: tercera,
+          seconds: segons, bestScore: millor
         }));
       }
     } catch (_) { /* El joc continua funcionant encara que es bloquegi localStorage. */ }
