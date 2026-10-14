@@ -37,6 +37,46 @@ let level=0,maze=levels[0].map;
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),S=24,D=[[1,0],[0,1],[-1,0],[0,-1]],$=id=>document.getElementById(id);
 let board,player,ghosts,score=0,lives=3,best=0,power=0,invul=0,state='ready',tick=0,last=0,acc=0;
 try{best=Number(localStorage.getItem('pacman-best'))||0}catch(e){} $('best').textContent=best;
+// ===== ESTRELLES PER AL CATÀLEG — PAC-MAN =====
+// ⭐ Completar el nivell 1 en Fàcil.
+// ⭐⭐ Completar el nivell 1 en Normal.
+// ⭐⭐⭐ Completar el nivell 1 en Difícil.
+// Els tres assoliments es recorden, independentment de l'ordre.
+const CLAU_ESTRELLES_PACMAN='hipercasual:estrelles:v1:pacman';
+function registrarNivell1Pacman(dificultat){
+  if(!['easy','normal','hard'].includes(dificultat))return;
+  try{
+    let anterior={};
+    try{
+      const valor=JSON.parse(localStorage.getItem(CLAU_ESTRELLES_PACMAN)||'{}');
+      if(valor && typeof valor==='object' && !Array.isArray(valor))anterior=valor;
+    }catch(_){/* Les dades errònies no han de bloquejar la partida. */}
+
+    const facil=Boolean(anterior.easyLevel1) || dificultat==='easy';
+    const normal=Boolean(anterior.normalLevel1) || dificultat==='normal';
+    const dificil=Boolean(anterior.hardLevel1) || dificultat==='hard';
+
+    // El catàleg representa el nombre d'estrelles com una progressió 0–3.
+    // Guanyar en Difícil abans de fer Fàcil/Normal no elimina cap repte.
+    const primera=Boolean(anterior.first) || facil;
+    const segona=Boolean(anterior.middle) || (facil && normal);
+    const tercera=Boolean(anterior.complete) || (facil && normal && dificil);
+
+    localStorage.setItem(CLAU_ESTRELLES_PACMAN,JSON.stringify({
+      ...anterior,
+      easyLevel1:facil,
+      normalLevel1:normal,
+      hardLevel1:dificil,
+      first:primera,
+      middle:segona,
+      complete:tercera,
+      // El catàleg antic fa servir `seconds >= 900` per a la primera estrella.
+      // Aquí és només un indicador de fita; no representa temps de joc.
+      seconds:Math.max(Number(anterior.seconds)||0,primera?900:0)
+    }));
+  }catch(_){/* Es pot seguir jugant encara que localStorage no funcioni. */}
+}
+
 const open=(x,y)=>y>=0&&y<maze.length&&x>=0&&x<21&&maze[y][x]!=='#';
 const modes={easy:{lives:4,pace:1.18,random:.18,power:7000,label:'Fàcil',description:'4 vides · fantasmes més lents i despistats'},normal:{lives:3,pace:1,random:0,power:6000,label:'Normal',description:'3 vides · un repte equilibrat'},hard:{lives:3,pace:.92,random:-.18,power:4500,label:'Difícil',description:'3 vides · fantasmes més ràpids i atents'}};
 let mode='easy',freeze=0,star=null,portals=[],musicClock=0,musicNote=0;
@@ -63,7 +103,7 @@ function pause(){if(state==='playing'){state='paused';overlay('Una petita pausa'
 function collision(){const p=position(player);for(const g of ghosts){if(g.wait>0)continue;const q=position(g);if(Math.hypot(q.x-p.x,q.y-p.y)>.65)continue;if(power){effect('ghost');score+=200;g.x=10;g.y=9;resetMotion(g);g.wait=700;hud()}else if(invul===0){effect('lose');freeze=0;lives--;hud();if(!lives){state='over';overlay('Fi de la partida',`Has aconseguit ${score} punts. Tornem-hi?`,'Torna a jugar')}else actors();return true}}return false}
 function distances(){const dist=new Map([[player.x+','+player.y,0]]),q=[[player.x,player.y]];for(let i=0;i<q.length;i++){let [x,y]=q[i];for(const [dx,dy]of D){let nx=x+dx,ny=y+dy,k=nx+','+ny;if(open(nx,ny)&&!dist.has(k)){dist.set(k,dist.get(x+','+y)+1);q.push([nx,ny])}}}return dist}
 function collectFood(){const food=board[player.y][player.x];if(food==='.'||food==='o'){score+=food==='o'?50:10;board[player.y][player.x]=' ';if(food==='o'){power=modes[mode].power;effect('power')}else effect('dot');hud()}}
-function eat(){collectFood();surpriseArrival();if(!board.some(r=>r.some(c=>c==='.'||c==='o'))){effect('win');if(level<levels.length-1){state='levelComplete';overlay(`Nivell ${level+1} complet!`,`${score} punts. Següent: ${levels[level+1].name}. ${surprises[level+1]} Conserves punts i vides.`,`Juga al nivell ${level+2}`)}else{state='won';overlay('Has superat els 3 nivells!',`${score} punts. Enhorabona!`,'Torna a jugar')}}}
+function eat(){collectFood();surpriseArrival();if(!board.some(r=>r.some(c=>c==='.'||c==='o'))){if(level===0)registrarNivell1Pacman(mode);effect('win');if(level<levels.length-1){state='levelComplete';overlay(`Nivell ${level+1} complet!`,`${score} punts. Següent: ${levels[level+1].name}. ${surprises[level+1]} Conserves punts i vides.`,`Juga al nivell ${level+2}`)}else{state='won';overlay('Has superat els 3 nivells!',`${score} punts. Enhorabona!`,'Torna a jugar')}}}
 function choosePlayer(){let [dx,dy]=D[player.next];if(open(player.x+dx,player.y+dy))player.d=player.next;[dx,dy]=D[player.d];return open(player.x+dx,player.y+dy)?{x:player.x+dx,y:player.y+dy}:null}
 function chooseGhost(g){const dist=distances();let opts=D.map((v,d)=>({x:g.x+v[0],y:g.y+v[1],d})).filter(p=>open(p.x,p.y));if(opts.length>1)opts=opts.filter(p=>p.d!==(g.d+2)%4);const balls=[];if(g.kind==='shy')board.forEach((r,y)=>r.forEach((c,x)=>{if(c==='o')balls.push({x,y})}));const corners=[{x:1,y:1},{x:19,y:1},{x:19,y:21},{x:1,y:21}],goal=corners[Math.floor(performanceTime/6500)%4];function cost(p){const distance=dist.get(p.x+','+p.y)??999;if(power)return -distance;if(g.kind==='shy'){const nearest=balls.reduce((v,b)=>Math.min(v,Math.abs(b.x-p.x)+Math.abs(b.y-p.y)),99);return distance+Math.max(0,5-nearest)*8}if(g.kind==='patrol')return Math.abs(p.x-goal.x)+Math.abs(p.y-goal.y);return distance}opts.sort((a,b)=>cost(a)-cost(b));const random=Math.max(.1,Math.min(.95,(g.kind==='clumsy'?.85:g.kind==='fast'?.45:g.kind==='shy'?.15:.25)+modes[mode].random));const target=opts[Math.random()<random?Math.floor(Math.random()*opts.length):0];if(target)g.d=target.d;return target}
 function move(a,amount,choose,onArrival){while(amount>0&&state==='playing'){if(a.x===a.tx&&a.y===a.ty){const target=choose(a);if(!target)return;a.tx=target.x;a.ty=target.y;a.progress=0}const travel=Math.min(amount,1-a.progress);a.progress+=travel;amount-=travel;if(a.progress>=1-1e-9){a.x=a.tx;a.y=a.ty;a.progress=0;if(onArrival)onArrival()}}}
