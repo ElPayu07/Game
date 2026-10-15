@@ -18,8 +18,34 @@ function fresh(){return {v:1,coins:80,xp:0,plots:Array(48).fill(null),size:8,see
 let s=fresh(),storageOK=true;try{let raw=localStorage.getItem(KEY);if(raw){let a=JSON.parse(raw);if(valid(a))s=a;}}catch(e){storageOK=false;}
 let tool='plant',selected=0,tab='shop',sound=false,ac,hover=-1,particles=[],lastUI=0,lastSave=0,bonus=null,nextBonus=Date.now()+15000;
 const level=()=>Math.min(30,1+Math.floor(Math.sqrt(s.xp/45))),threshold=l=>45*l*l,fmt=n=>Math.floor(n).toLocaleString('ca-ES'),duration=t=>t>=3600?`${Math.floor(t/3600)} h ${Math.floor(t%3600/60)} min`:t>=60?`${Math.floor(t/60)} min ${Math.ceil(t%60)} s`:`${Math.ceil(t)} s`;
+// Estrelles del catàleg: nivell 5, nivell 15 i nivell 25.
+// Es consulta el nivell ja desat i les estrelles no es perden mai.
+const MYGARDEN_STARS_KEY='hipercasual:estrelles:v1:garden';
+function registrarEstrellesMyGarden(){
+ try{
+  let previous={};
+  try{
+   const stored=JSON.parse(localStorage.getItem(MYGARDEN_STARS_KEY)||'{}');
+   if(stored&&typeof stored==='object'&&!Array.isArray(stored))previous=stored;
+  }catch(_){}
+  const currentLevel=level();
+  const third=Boolean(previous.complete)||currentLevel>=25;
+  const second=Boolean(previous.middle)||third||currentLevel>=15;
+  const first=Boolean(previous.first)||second||currentLevel>=5;
+  // Compatibilitat amb el catàleg: 900 representa la primera estrella,
+  // no pas 900 segons de joc real.
+  const seconds=Math.max(0,Number(previous.seconds)||0,first?900:0);
+  if(Boolean(previous.first)!==first||Boolean(previous.middle)!==second||
+     Boolean(previous.complete)!==third||Number(previous.seconds||0)!==seconds){
+   localStorage.setItem(MYGARDEN_STARS_KEY,JSON.stringify({
+    ...previous,first,middle:second,complete:third,seconds
+   }));
+  }
+ }catch(_){} // El joc continua funcionant si localStorage no està disponible.
+}
+registrarEstrellesMyGarden();
 function valid(a){return a&&a.v===1&&Number.isFinite(a.coins)&&a.coins>=0&&Number.isFinite(a.xp)&&a.xp>=0&&Number.isFinite(a.last)&&Number.isFinite(a.started)&&Number.isFinite(a.active)&&Number.isInteger(a.size)&&a.size>=8&&a.size<=48&&a.size%8===0&&Array.isArray(a.plots)&&a.plots.length===48&&a.plots.every(p=>p===null||(Number.isInteger(p.id)&&crops[p.id]&&Number.isFinite(p.growth)&&p.growth>=0&&typeof p.water==='boolean'))&&Array.isArray(a.seeds)&&a.seeds.length===16&&a.seeds.every(n=>Number.isInteger(n)&&n>=0)&&Array.isArray(a.bag)&&a.bag.every(b=>crops[b.id]&&mutations[b.m]&&Number.isFinite(b.value)&&b.value>=0)&&a.up&&['water','soil','luck','sprinkler'].every(k=>Number.isInteger(a.up[k])&&a.up[k]>=0&&a.up[k]<=10)&&['harvest','orders','earned','orderSeed','lastGift'].every(k=>Number.isFinite(a[k])&&a[k]>=0)&&['discovered','claimed'].every(k=>Array.isArray(a[k]))&&(a.quest===null||(a.quest&&crops[a.quest.id]&&Number.isInteger(a.quest.n)&&a.quest.n>0&&Number.isFinite(a.quest.reward)&&a.quest.reward>0));}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(s));$('saveStatus').textContent='Partida desada · '+new Date().toLocaleTimeString('ca-ES',{hour:'2-digit',minute:'2-digit'});}catch(e){storageOK=false;$('saveStatus').textContent='No es pot desar aquí: exporta la partida';}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(s));$('saveStatus').textContent='Partida desada · '+new Date().toLocaleTimeString('ca-ES',{hour:'2-digit',minute:'2-digit'});}catch(e){storageOK=false;$('saveStatus').textContent='No es pot desar aquí: exporta la partida';}registrarEstrellesMyGarden();}
 function toast(t){$('toast').textContent=t;$('toast').style.opacity=1;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').style.opacity=0,2800);}
 function beep(freq=600){if(!sound)return;try{ac??=new(window.AudioContext||window.webkitAudioContext)();let o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=freq;g.gain.setValueAtTime(.06,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.12);o.connect(g).connect(ac.destination);o.start();o.stop(ac.currentTime+.13);}catch(e){}}
 function weather(now=Date.now()){let i=Math.floor((now-s.started)/180000);return [{name:'Sol suau',rain:false},{name:'Pluja de primavera',rain:true},{name:'Brisa de tarda',rain:false},{name:'Pol·len daurat',rain:false}][((i%4)+4)%4];}
