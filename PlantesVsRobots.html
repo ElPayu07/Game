@@ -125,7 +125,35 @@ let pointer={c:-1,r:-1},last=performance.now(),audioCtx=null,toastTimer,uiClock=
 const rand=(a,b)=>a+Math.random()*(b-a);
 const choice=a=>a[Math.floor(Math.random()*a.length)];
 const center=c=>X+c*CW+CW/2, rowY=r=>Y+r*CH+CH/2;
-function save(){try{localStorage.setItem("plantsRobotsV1",JSON.stringify({progress,won}))}catch{}}
+// ===== ESTRELLES DEL CATÀLEG (el disseny i el joc no canvien) =====
+// ⭐ Nivell 5 · ⭐⭐ Nivell 15 · ⭐⭐⭐ Nivell 25.
+// S'aprofita el progrés que el mateix joc ja conserva a plantsRobotsV1.
+const CLAU_ESTRELLES_PLANTES = "hipercasual:estrelles:v1:plantes";
+function registrarEstrellesPlantes(){
+ try{
+  let anterior={};
+  try{
+   const llegit=JSON.parse(localStorage.getItem(CLAU_ESTRELLES_PLANTES)||"{}");
+   if(llegit&&typeof llegit==="object"&&!Array.isArray(llegit))anterior=llegit;
+  }catch(_){} // Les estrelles poden recuperar-se dels nivells superats.
+  const nivellSuperat=n=>won.some(v=>Number(v)===n)||progress>n;
+  const tercera=Boolean(anterior.complete)||nivellSuperat(25);
+  const segona=Boolean(anterior.middle)||tercera||nivellSuperat(15);
+  const primera=Boolean(anterior.first)||segona||nivellSuperat(5);
+  // Compatibilitat amb el catàleg actual: seconds >= 900 = primera estrella.
+  // Aquest valor no representa temps jugat.
+  const segons=Math.max(0,Number(anterior.seconds)||0,primera?900:0);
+  if(Boolean(anterior.first)!==primera||Boolean(anterior.middle)!==segona||
+     Boolean(anterior.complete)!==tercera||Number(anterior.seconds||0)!==segons){
+   localStorage.setItem(CLAU_ESTRELLES_PLANTES,JSON.stringify({
+    ...anterior,first:primera,middle:segona,complete:tercera,seconds:segons
+   }));
+  }
+ }catch(_){} // La partida continua encara que el desament estigui bloquejat.
+}
+function save(){try{localStorage.setItem("plantsRobotsV1",JSON.stringify({progress,won}))}catch{}registrarEstrellesPlantes()}
+// Reconeix les victòries anteriors sense obligar a repetir cap nivell.
+registrarEstrellesPlantes();
 function notify(t){$("#toast").textContent=t;$("#toast").style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("#toast").style.opacity=0,2400)}
 function beep(freq=420,dur=.08,type="sine",vol=.04){
  if(!sound)return;try{audioCtx??=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur)}catch{}
